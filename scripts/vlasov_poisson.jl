@@ -39,6 +39,37 @@ function lorentz_force!(t, z, ż, p::PoissonSolver)
     end
 end
 
+# splitting fields
+function v_advection!(t, z, ż)
+    for i in axes(ż, 2)
+        ż[1,i] = z[2,i]
+        ż[2,i] = 0
+    end
+end
+
+function s_advection!(t, z, s, h)
+    for i in axes(s, 2)
+        s[1,i] = z[1,i] + h * z[2,i]
+        s[2,i] = z[2,i]
+    end
+end
+
+function v_lorentz_force!(t, z, ż, p::PoissonSolver)
+    Particles.solve!(p, z[1,:])
+    for i in axes(ż, 2)
+        ż[1,i] = 0
+        ż[2,i] = eval_field(p, z[1,i])
+    end
+end
+
+function s_lorentz_force!(t, z, s, h, p::PoissonSolver)
+    Particles.solve!(p, z[1,:])
+    for i in axes(s, 2)
+        s[1,i] = z[1,i]
+        s[2,i] = z[2,i] + h * eval_field(p, z[1,i])
+    end
+end
+
 # solution storage
 function copy_to_hdf5(h5z, z, n)
     h5z[:,:,n+1] = z
@@ -48,8 +79,13 @@ end
 p = PoissonSolver{eltype(z₀)}(nx)
 Particles.solve!(p, x₀)
 
-# create an Equation instance
-equ = ODE((t, z, ż) -> lorentz_force!(t, z, ż, p), z₀)
+# create an ODE instance
+# ode = ODE((t, z, ż) -> lorentz_force!(t, z, ż, p), z₀)
+
+# create a splitting ODE instance
+sode = SODE((v_advection!, (t, z, ż) -> v_lorentz_force!(t, z, ż, p)),
+            (s_advection!, (t, z, s, h) -> s_lorentz_force!(t, z, s, h, p)),
+            z₀)
 
 # create HDF5 file and copy initial conditions
 h5  = h5open(h5file, "w")
@@ -57,13 +93,16 @@ h5z = d_create(h5, "z", eltype(z₀), ((2, np, nt+1), (2, np, -1)), "chunk", (2,
 copy_to_hdf5(h5z, z₀, 0)
 
 # create integrator
-int = IntegratorExplicitEuler(equ, Δt)
+# int = IntegratorExplicitEuler(ode, Δt)
+int = Integrator(sode, getTableauStrang(), Δt)
 
 # create atomic solution
-asol = AtomicSolution(equ)
+# asol = AtomicSolution(ode)
+asol = AtomicSolution(sode)
 
 # copy initial conditons to atomic solution
-set_initial_conditions!(asol, equ)
+# set_initial_conditions!(asol, ode)
+set_initial_conditions!(asol, sode)
 
 # initilize integrator
 initialize!(int, asol)
