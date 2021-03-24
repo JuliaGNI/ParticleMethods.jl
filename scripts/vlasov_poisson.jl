@@ -89,12 +89,12 @@ sode = SODE((v_advection!, (t, z, ż) -> v_lorentz_force!(t, z, ż, p)),
 
 # create HDF5 file and copy initial conditions
 h5  = h5open(h5file, "w")
-h5z = d_create(h5, "z", eltype(z₀), ((2, np, nt+1), (2, np, -1)), "chunk", (2,np,1))
+h5z = create_dataset(h5, "z", eltype(z₀), ((2, np, nt+1), (2, np, -1)), chunk=(2,np,1))
 copy_to_hdf5(h5z, z₀, 0)
 
 # create integrator
 # int = IntegratorExplicitEuler(ode, Δt)
-int = Integrator(sode, getTableauStrang(), Δt)
+int = Integrator(sode, TableauStrang(), Δt)
 
 # create atomic solution
 # asol = AtomicSolution(ode)

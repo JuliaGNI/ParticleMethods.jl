@@ -55,7 +55,7 @@ equ = ODE(lorentz_force!, z₀)
 
 # create HDF5 file and copy initial conditions
 h5  = h5open(h5file, "w")
-h5z = d_create(h5, "z", eltype(z₀), ((6, ns, nt+1), (6, ns, -1)), "chunk", (6,ns,1))
+h5z = create_dataset(h5, "z", eltype(z₀), ((6, ns, nt+1), (6, ns, -1)), chunk=(6,ns,1))
 copy_to_hdf5(h5z, z₀, 0)
 
 # create integrator
