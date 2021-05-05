@@ -54,6 +54,9 @@ struct PoissonSolverPBSplines{DT <: Real} <: PoissonSolver{DT}
     ϕ::Vector{DT}
     rhs::Vector{DT}
 
+    Mfac::LU{DT, Matrix{DT}}
+    Sfac::LU{DT, Matrix{DT}}
+
     function PoissonSolverPBSplines{DT}(p::Int, nₕ::Int, L::DT) where {DT}
         Δx = L/nₕ
         xgrid = collect(0:Δx:1)
@@ -66,9 +69,10 @@ struct PoissonSolverPBSplines{DT <: Real} <: PoissonSolver{DT}
         R = A * A' / (A' * A)
         P = Matrix(I, nₕ, nₕ) .- R
         Ŝ = S .+ R
-        
+
         new(p, nₕ, Δx, xgrid, L, bspl, M, S, Ŝ, P, R, 
-            zeros(DT,nₕ), zeros(DT,nₕ), zeros(DT,nₕ))
+            zeros(DT,nₕ), zeros(DT,nₕ), zeros(DT,nₕ), 
+            lu(M), lu(Ŝ))
     end
 end
 
@@ -77,10 +81,8 @@ PoissonSolverPBSplines(p::Int, nₕ::Int, L::DT) where {DT} = PoissonSolverPBSpl
 
 function solve!(p::PoissonSolverPBSplines{DT}, x::AbstractVector{DT}, w::AbstractVector{DT} = one.(x) ./ length(x)) where {DT}
     rhs_particles_PBSBasis(x, w, p.bspl, p.rhs)
-    p.ϕ .= p.Ŝ \ (- p.P * p.rhs)
-    p.ρ .= p.M \ p.rhs
-    # ldiv!(p.ϕ, p.Ŝ, p.P * p.rhs)
-    # ldiv!(p.ρ, p.M, p.rhs)
+    ldiv!(p.ϕ, p.Sfac, - p.P * p.rhs)
+    ldiv!(p.ρ, p.Mfac, p.rhs)
     return p
 end
 
