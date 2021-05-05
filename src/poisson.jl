@@ -1,36 +1,65 @@
 
-struct PoissonSolver{DT <: Real}
-    nx::Int
-    Δx::DT
-    xgrid::Vector{DT}
-    ρ::Vector{DT}
-    ϕ::Vector{DT}
+abstract type PoissonSolver{dType} end
 
-    function PoissonSolver{DT}(nx::Int) where {DT}
-        Δx = 1/nx
-        xgrid = collect(0:Δx:1)
-        new(nx, Δx, xgrid, zeros(DT, nx), zeros(DT, nx))
+
+"""
+Solves the Poisson equation for periodic boundary conditions
+
+```
+function solve!(p::PoissonSolver, x::AbstractVector, w::AbstractVector) end
+```
+
+"""
+function solve! end
+
+
+"""
+Evaluates the charge density field
+"""
+function eval_density end
+
+"""
+Evaluates the electrostatic potential
+"""
+function eval_potential end
+
+"""
+Evaluates the electric field
+"""
+function eval_field end
+
+
+
+function eval_density(p::PoissonSolver{DT}, x::AbstractVector{DT}) where {DT}
+    [eval_density(p,x_) for x_ in x]
+end
+
+function eval_potential(p::PoissonSolver{DT}, x::AbstractVector{DT}) where {DT}
+    [eval_potential(p,x_) for x_ in x]
+end
+
+function eval_field(p::PoissonSolver{DT}, x::AbstractVector{DT}) where {DT}
+    [eval_field(p,x_) for x_ in x]
+end
+
+
+function eval_density!(y::AbstractVector{DT}, p::PoissonSolver{DT}, x::AbstractVector{DT}) where {DT}
+    for i in eachindex(x,y)
+        y[i] = eval_density(p,x[i])
     end
+    return y
 end
 
-
-function solve!(p::PoissonSolver{DT}, x::AbstractVector{DT}) where {DT}
-    h = fit(Histogram, mod.(x, 1), p.xgrid)
-    p.ρ .= h.weights ./ length(x)
-    ρ̂ = rfft(p.ρ)
-    k² = [(i-1)^2 for i in eachindex(ρ̂)]
-    ϕ̂ = - ρ̂ ./ k²
-    ϕ̂[1] = 0
-    p.ϕ .= irfft(ϕ̂, length(p.ρ))
-    return p
+function eval_potential!(y::AbstractVector{DT}, p::PoissonSolver{DT}, x::AbstractVector{DT}) where {DT}
+    for i in eachindex(x,y)
+        y[i] = eval_potential(p,x[i])
+    end
+    return y
 end
 
-
-function eval_field(p::PoissonSolver{DT}, x::DT) where {DT}
-    y = mod(x, one(x))
-    i1 = floor(Int, y / p.Δx) + 1
-    i2 = mod( ceil(Int, y / p.Δx), p.nx) + 1
-    i1 == i2 && (i1 = i1-1)
-    i1 == 0 && (i1 = lastindex(p.ϕ))
-    return - (p.ϕ[i2] - p.ϕ[i1]) / p.Δx
+function eval_field!(y::AbstractVector{DT}, p::PoissonSolver{DT}, x::AbstractVector{DT}) where {DT}
+    for i in eachindex(x,y)
+        y[i] = eval_field(p,x[i])
+    end
+    return y
 end

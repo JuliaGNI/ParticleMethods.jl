@@ -76,7 +76,7 @@ function copy_to_hdf5(h5z, z, n)
 end
 
 # create Poisson solver
-p = PoissonSolver{eltype(z₀)}(nx)
+p = PoissonSolverFFT{eltype(z₀)}(nx)
 Particles.solve!(p, x₀)
 
 # create an ODE instance
