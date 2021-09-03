@@ -6,10 +6,12 @@ Particles' development is coordinated by a group of *principal developers*, who 
 
 * [Michael Kraus](https://www.michael-kraus.org/),
   Max Planck Institute for Plasma Physics, Garching, Germany
-* Tobias Blickhan,
+* Tobias M. Blickhan,
   Max Planck Institute for Plasma Physics, Garching, Germany
 
 ## Contributors
 
 The following people contributed to Particles and are listed in alphabetical order:
 
+* Tobias M. Blickhan
+* Michael Kraus
