@@ -57,26 +57,26 @@ struct PoissonSolverPBSplines{DT <: Real} <: PoissonSolver{DT}
     Mfac::LU{DT, Matrix{DT}}
     Sfac::LU{DT, Matrix{DT}}
 
-    function PoissonSolverPBSplines{DT}(p::Int, nₕ::Int, L::DT) where {DT}
-        Δx = L/nₕ
+    function PoissonSolverPBSplines{DT}(p::Int, nx::Int, L::DT) where {DT}
+        Δx = L/nx
         xgrid = collect(0:Δx:1)
 
-        bspl = PBSpline(p, nₕ, L)
+        bspl = PBSpline(p, nx, L)
         M = massmatrix(bspl)
         S = stiffnessmatrix(bspl)
 
-        A = ones(nₕ)
+        A = ones(nx)
         R = A * A' / (A' * A)
-        P = Matrix(I, nₕ, nₕ) .- R
+        P = Matrix(I, nx, nx) .- R
         Ŝ = S .+ R
 
-        new(p, nₕ, Δx, xgrid, L, bspl, M, S, Ŝ, P, R, 
-            zeros(DT,nₕ), zeros(DT,nₕ), zeros(DT,nₕ), 
+        new(p, nx, Δx, xgrid, L, bspl, M, S, Ŝ, P, R, 
+            zeros(DT,nx), zeros(DT,nx), zeros(DT,nx), 
             lu(M), lu(Ŝ))
     end
 end
 
-PoissonSolverPBSplines(p::Int, nₕ::Int, L::DT) where {DT} = PoissonSolverPBSplines{DT}(p, nₕ, L)
+PoissonSolverPBSplines(p::Int, nx::Int, L::DT) where {DT} = PoissonSolverPBSplines{DT}(p, nx, L)
 
 
 function solve!(p::PoissonSolverPBSplines{DT}, x::AbstractVector{DT}, w::AbstractVector{DT} = one.(x) ./ length(x)) where {DT}
