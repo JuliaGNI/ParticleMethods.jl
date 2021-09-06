@@ -55,7 +55,7 @@ function save_timestep!(IC::VPIntegratorCache, poisson::PoissonSolver, ts)
     IC.V[:,ts] .= IC.v
     IC.Φ[:,ts] .= poisson.ϕ
 
-    IC.W[ts] = 0.5 * dot(poisson.ϕ, poisson.S * poisson.ϕ)
+    IC.W[ts] = 0.5 * dot(poisson.ϕ, poisson.S, poisson.ϕ)
     IC.K[ts] = 0.5 * dot(IC.w .* IC.v, IC.v)
     IC.M[ts] = dot(IC.w, IC.v)
 end
