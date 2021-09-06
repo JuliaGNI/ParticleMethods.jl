@@ -10,14 +10,12 @@ using Plots
 # simulation parameters
 
 const dt = 1e-1             # timestep
-# const T = 1                 # final time
 const T = 50                # final time
 const nₜ = Int(div(T, dt))  # nb. of timesteps
 const nₕ = 16               # nb. of elements
 const p  = 3                # spline degree
 
-# const nₚ = Int(5e4)         # nb. of particles
-const nₚ = Int(1e3)         # nb. of particles
+const nₚ = Int(5e4)         # nb. of particles
 
 const vmin = -10
 const vmax = +10
