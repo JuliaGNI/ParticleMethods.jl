@@ -56,7 +56,7 @@ function run()
 
     # integrate all time steps
     # for t = 1:nₜ
-        integrate_vp(P, poisson, params, IP, IC)
+        integrate_vp!(P, poisson, params, IP, IC)
     # end
 
     # plot diagnostics

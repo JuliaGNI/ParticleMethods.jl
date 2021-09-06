@@ -32,7 +32,7 @@ export PoissonSolverPBSplines
 
 include("integrate_vlasov_poisson.jl")
 
-export VPIntegratorParameters, VPIntegratorCache, integrate_vp
+export VPIntegratorParameters, VPIntegratorCache, integrate_vp!
 
 
 include("sampling.jl")

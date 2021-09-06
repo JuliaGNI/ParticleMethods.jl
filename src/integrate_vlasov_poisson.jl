@@ -50,7 +50,7 @@ VPIntegratorCache(IP::VPIntegratorParameters{T}) where {T} = VPIntegratorCache(
                                                                 zeros(T,IP.nₛ)  # M
                                                             )
 
-function save_timestep(IC::VPIntegratorCache, poisson::PoissonSolver, ts)
+function save_timestep!(IC::VPIntegratorCache, poisson::PoissonSolver, ts)
     IC.X[:,ts] .= IC.x
     IC.V[:,ts] .= IC.v
     IC.Φ[:,ts] .= poisson.ϕ
@@ -60,7 +60,7 @@ function save_timestep(IC::VPIntegratorCache, poisson::PoissonSolver, ts)
     IC.M[ts] = dot(IC.w, IC.v)
 end
 
-function solve_potential(IC::VPIntegratorCache, poisson::PoissonSolver, ts, χ, Φₑₓₜ, given_phi)
+function solve_potential!(IC::VPIntegratorCache, poisson::PoissonSolver, ts, χ, Φₑₓₜ, given_phi)
     if given_phi
         IC.ϕ = Φₑₓₜ[:,ts]
     else
@@ -71,14 +71,14 @@ function solve_potential(IC::VPIntegratorCache, poisson::PoissonSolver, ts, χ, 
 end
 
 
-function integrate_vp(P::ParticleList{T},
-                      poisson::PoissonSolver{T},
-                      parameters::NamedTuple,
-                      IP::VPIntegratorParameters{T},
-                      IC::VPIntegratorCache{T} = VPIntegratorCache(IP);
-                      given_phi = false,
-                      Φₑₓₜ::Array{T} = zeros(T, IP.nₕ, IP.nₚ),
-                      save = true) where {T}
+function integrate_vp!(P::ParticleList{T},
+                       poisson::PoissonSolver{T},
+                       parameters::NamedTuple,
+                       IP::VPIntegratorParameters{T},
+                       IC::VPIntegratorCache{T} = VPIntegratorCache(IP);
+                       given_phi = false,
+                       Φₑₓₜ::Array{T} = zeros(T, IP.nₕ, IP.nₚ),
+                       save = true) where {T}
 
     nsave = div(IP.nₜ, IP.nₛ-1)
     tₛ = 1
@@ -97,8 +97,8 @@ function integrate_vp(P::ParticleList{T},
 
     # save initial conditions
     if save
-        solve_potential(IC, poisson, 1, χ, Φₑₓₜ, given_phi)
-        save_timestep(IC, poisson, 1)
+        solve_potential!(IC, poisson, 1, χ, Φₑₓₜ, given_phi)
+        save_timestep!(IC, poisson, 1)
     end
 
     for t in 1:IP.nₜ
@@ -106,7 +106,7 @@ function integrate_vp(P::ParticleList{T},
         IC.x .+= 0.5 .* IP.dt .* IC.v .* χ
 
         # solve for potential
-        solve_potential(IC, poisson, t+1, χ, Φₑₓₜ, given_phi)
+        solve_potential!(IC, poisson, t+1, χ, Φₑₓₜ, given_phi)
 
         # evaluate electric field
         eval_field!(IC.a, poisson, IC.x)
@@ -118,8 +118,8 @@ function integrate_vp(P::ParticleList{T},
         IC.x .+= 0.5 .* IP.dt .* IC.v .* χ
 
         if save && t % nsave == 0
-            solve_potential(IC, poisson, t+1, χ, Φₑₓₜ, given_phi)
-            save_timestep(IC, poisson, tₛ+1)
+            solve_potential!(IC, poisson, t+1, χ, Φₑₓₜ, given_phi)
+            save_timestep!(IC, poisson, tₛ+1)
             tₛ += 1
         end
     end
