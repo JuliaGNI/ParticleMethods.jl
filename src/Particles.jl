@@ -22,7 +22,7 @@ include("poisson_splines.jl")
 export PoissonSolverPBSplines
 
 
-include("integrate_vlasov_poisson.jl")
+include("vlasov_poisson.jl")
 
 export VPIntegratorParameters, VPIntegratorCache, integrate_vp!
 
