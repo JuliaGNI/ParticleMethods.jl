@@ -27,6 +27,7 @@ mutable struct VPIntegratorCache{T}
 
     X::Matrix{T}
     V::Matrix{T}
+    A::Matrix{T}
     Φ::Matrix{T}
 
     W::Vector{T}
@@ -44,29 +45,31 @@ VPIntegratorCache(IP::VPIntegratorParameters{T}) where {T} = VPIntegratorCache(
                                                                 zeros(T,IP.nₕ), # rhs
                                                                 zeros(T,IP.nₚ,IP.nₛ), # X
                                                                 zeros(T,IP.nₚ,IP.nₛ), # V
+                                                                zeros(T,IP.nₚ,IP.nₛ), # A
                                                                 zeros(T,IP.nₕ,IP.nₛ), # Φ
                                                                 zeros(T,IP.nₛ), # W
                                                                 zeros(T,IP.nₛ), # K
                                                                 zeros(T,IP.nₛ)  # M
                                                             )
 
-function save_timestep!(IC::VPIntegratorCache, poisson::PoissonSolver, ts)
+function save_timestep!(IC::VPIntegratorCache, poisson::PoissonSolver, ts, χ)
     IC.X[:,ts] .= IC.x
     IC.V[:,ts] .= IC.v
+    IC.A[:,ts] .= IC.a
     IC.Φ[:,ts] .= poisson.ϕ
 
-    IC.W[ts] = 0.5 * dot(poisson.ϕ, poisson.S, poisson.ϕ)
-    IC.K[ts] = 0.5 * dot(IC.w .* IC.v, IC.v)
+    IC.W[ts] = dot(poisson.ϕ, poisson.S, poisson.ϕ) / 2 * χ^2
+    IC.K[ts] = dot(IC.w .* IC.v, IC.v) / 2
     IC.M[ts] = dot(IC.w, IC.v)
 end
 
 function solve_potential!(IC::VPIntegratorCache, poisson::PoissonSolver, ts, χ, Φₑₓₜ, given_phi)
     if given_phi
-        IC.ϕ = Φₑₓₜ[:,ts]
+        IC.ϕ .= Φₑₓₜ[:,ts]
     else
         solve!(poisson, IC.x, IC.w)
+        poisson.ϕ ./= χ^2
         IC.ϕ .= poisson.ϕ
-        IC.ϕ ./= χ^2
     end
 end
 
@@ -81,7 +84,6 @@ function integrate_vp!(P::ParticleList{T},
                        save = true) where {T}
 
     nsave = div(IP.nₜ, IP.nₛ-1)
-    tₛ = 1
 
     if given_phi
         @assert IP.nₛ == IP.nₜ + 1
@@ -98,9 +100,10 @@ function integrate_vp!(P::ParticleList{T},
     # save initial conditions
     if save
         solve_potential!(IC, poisson, 1, χ, Φₑₓₜ, given_phi)
-        save_timestep!(IC, poisson, 1)
+        save_timestep!(IC, poisson, 1, χ)
     end
 
+    tₛ = 1
     for t in 1:IP.nₜ
         # half an advection step
         IC.x .+= 0.5 .* IP.dt .* IC.v .* χ
@@ -119,11 +122,11 @@ function integrate_vp!(P::ParticleList{T},
 
         if save && t % nsave == 0
             solve_potential!(IC, poisson, t+1, χ, Φₑₓₜ, given_phi)
-            save_timestep!(IC, poisson, tₛ+1)
+            save_timestep!(IC, poisson, tₛ+1, χ)
             tₛ += 1
         end
     end
 
-    P.x .= IC.x
-    P.v .= IC.v
+    # P.x .= IC.x
+    # P.v .= IC.v
 end
