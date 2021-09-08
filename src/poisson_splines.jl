@@ -97,5 +97,5 @@ function eval_potential(p::PoissonSolverPBSplines{DT}, x::DT) where {DT}
 end
 
 function eval_field(p::PoissonSolverPBSplines{DT}, x::DT) where {DT}
-    - eval_deriv_PBSBasis(p.ϕ, p.bspl, x)
+    eval_deriv_PBSBasis(p.ϕ, p.bspl, x)
 end
