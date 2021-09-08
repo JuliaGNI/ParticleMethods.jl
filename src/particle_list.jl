@@ -8,3 +8,5 @@ struct ParticleList{T}
     v::Vector{T}
     w::Vector{T}
 end
+
+Base.length(pl::ParticleList) = length(pl.w)

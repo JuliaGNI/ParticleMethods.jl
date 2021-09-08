@@ -21,6 +21,7 @@ end
 
 PoissonSolverFFT(nx::Int, L::DT) where {DT} = PoissonSolverFFT{DT}(nx, L)
 
+Base.length(p::PoissonSolverFFT) = p.nx
 
 function solve!(p::PoissonSolverFFT{DT}, x::AbstractVector{DT}, w::AbstractVector{DT} = one.(x) ./ length(x)) where {DT}
     h = fit(Histogram, mod.(x, p.L), p.cells)

@@ -78,6 +78,7 @@ end
 
 PoissonSolverPBSplines(p::Int, nx::Int, L::DT) where {DT} = PoissonSolverPBSplines{DT}(p, nx, L)
 
+Base.length(p::PoissonSolverPBSplines) = p.nx
 
 function solve!(p::PoissonSolverPBSplines{DT}, x::AbstractVector{DT}, w::AbstractVector{DT} = one.(x) ./ length(x)) where {DT}
     rhs_particles_PBSBasis(x, w, p.bspl, p.rhs)
