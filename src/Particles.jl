@@ -1,5 +1,9 @@
 module Particles
 
+using HDF5
+using HDF5: H5DataStore
+
+
 include("particle_list.jl")
 
 export ParticleList
