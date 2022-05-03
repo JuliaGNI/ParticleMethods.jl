@@ -1,7 +1,7 @@
 
 """
 Particles struct.
-fields: positon x, velocity v, weight w
+fields: position x, velocity v, weight w
 """
 struct ParticleList{T}
     x::Vector{T}
