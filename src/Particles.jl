@@ -3,6 +3,14 @@ module Particles
 using HDF5
 using HDF5: H5DataStore
 
+using StaticArrays: MVector
+
+
+
+include("particle.jl")
+
+export Particle
+
 
 include("particle_list.jl")
 

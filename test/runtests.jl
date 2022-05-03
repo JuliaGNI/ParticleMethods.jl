@@ -1,6 +1,8 @@
 using Particles
 using Test
 
+using StaticArrays: MVector
+
 @testset "Particles.jl" begin
-    # Write your tests here.
+    include("particle_tests.jl")
 end
