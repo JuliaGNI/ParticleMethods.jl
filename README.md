@@ -6,7 +6,7 @@
 [![Build Status](https://github.com/JuliaGNI/Particles.jl/workflows/CI/badge.svg)](https://github.com/JuliaGNI/Particles.jl/actions)
 [![Coverage](https://codecov.io/gh/JuliaGNI/Particles.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaGNI/Particles.jl)
 
-This package implements geometric charged particle methods.
+This package implements a general framework for particle methods.
 
 ## Installation
 
