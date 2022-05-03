@@ -6,6 +6,8 @@ using HDF5: H5DataStore
 using StaticArrays: MVector
 
 
+include("hdf5_utils.jl")
+
 
 include("particle.jl")
 
