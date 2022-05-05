@@ -17,6 +17,7 @@ export Particle
 include("particle_list.jl")
 
 export ParticleList
+export eachparticle
 
 
 include("poisson.jl")
