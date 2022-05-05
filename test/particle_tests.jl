@@ -1,19 +1,22 @@
 
 # test constructors
 l = 7
-s = MVector{l}(zeros(l))
-p1 = Particle(s; variables = (x = 1:3, v = 4:6, z = 1:6, w = 7), parameters = (a = 1, b = 1.0))
-p2 = Particle(eltype(s), length(s); variables = (x = 1:3, v = 4:6, z = 1:6, w = 7), parameters = (a = 1, b = 1.0))
+vars = (x = 1:3, v = 4:6, z = 1:6, w = 7)
+params = (a = 1, b = 1.0)
 
-@test p1.state == p2.state
+ps = MVector{l}(zeros(l))
+p1 = Particle(ps; variables = vars, parameters = params)
+p2 = Particle(eltype(ps), length(ps); variables = vars, parameters = params)
+
+@test p1.state == p2.state == ps
 @test p1.views == p2.views
-@test p1.params == p2.params
-@test p1.params === p2.params
+@test p1.params == p2.params == params
+@test p1.params === p2.params === params
 
 # test assertions
-@test_throws AssertionError Particle(s; variables = (z = 1:6, w = 7), parameters = (a = 1, z = 2))
-@test_throws AssertionError Particle(s; variables = (z = 1:6, state = 7), parameters = (a = 1, z = 2))
-@test_throws AssertionError Particle(s; variables = (z = 1:6, w = 7), parameters = (a = 1, state = 2))
+@test_throws AssertionError Particle(ps; variables = (z = 1:6, w = 7), parameters = (a = 1, z = 2))
+@test_throws AssertionError Particle(ps; variables = (z = 1:6, state = 7), parameters = (a = 1, b = 2))
+@test_throws AssertionError Particle(ps; variables = (z = 1:6, w = 7), parameters = (a = 1, state = 2))
 
 
 # test getproperty
