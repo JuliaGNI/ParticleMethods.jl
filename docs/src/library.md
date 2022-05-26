@@ -1,9 +1,9 @@
 ```@meta
-CurrentModule = Particles
+CurrentModule = ParticleMethods
 ```
 
 # Particles Library Functions
 
 ```@autodocs
-Modules = [Particles]
+Modules = [ParticleMethods]
 ```

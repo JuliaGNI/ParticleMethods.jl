@@ -1,5 +1,5 @@
 ```@meta
-CurrentModule = Particles
+CurrentModule = ParticleMethods
 ```
 
 # Particles.jl
@@ -7,9 +7,9 @@ CurrentModule = Particles
 
 ## Installation
 
-*Particles.jl* and all of its dependencies can be installed via the Julia REPL by typing 
+*ParticleMethods.jl* and all of its dependencies can be installed via the Julia REPL by typing 
 ```julia
-]add Particles
+]add ParticleMethods
 ```
 
 

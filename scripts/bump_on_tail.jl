@@ -2,8 +2,8 @@ module BumpOnTailSimulation
 
 using LaTeXStrings
 using LinearAlgebra
-using Particles
-using Particles.BumpOnTail
+using ParticleMethods
+using ParticleMethods.BumpOnTail
 using Plots
 
 

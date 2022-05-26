@@ -1,9 +1,9 @@
-using Particles
+using ParticleMethods
 using Test
 
 using StaticArrays: MVector
 
-@testset "Particles.jl" begin
+@testset "ParticleMethods.jl" begin
     @testset "Particles" begin
         include("particle_tests.jl")
     end

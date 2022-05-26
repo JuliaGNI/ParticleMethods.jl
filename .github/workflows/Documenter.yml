@@ -30,8 +30,8 @@ jobs:
         run: |
           julia --project=docs -e '
             using Documenter: doctest
-            using Particles
-            doctest(Particles)'
+            using ParticleMethods
+            doctest(ParticleMethods)'
       - name: Build and deploy Documentation
         run: julia --project make.jl
         working-directory: docs

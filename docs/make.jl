@@ -1,4 +1,4 @@
-using Particles
+using ParticleMethods
 using Documenter
 using Weave
 
@@ -11,13 +11,13 @@ weave("src/poisson.jmd",
 
 
 makedocs(;
-    modules=[Particles],
+    modules=[ParticleMethods],
     authors="Michael Kraus",
-    repo="https://github.com/JuliaGNI/Particles.jl/blob/{commit}{path}#L{line}",
-    sitename="Particles.jl",
+    repo="https://github.com/JuliaGNI/ParticleMethods.jl/blob/{commit}{path}#L{line}",
+    sitename="ParticleMethods.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://juliagni.github.io/Particles.jl",
+        canonical="https://juliagni.github.io/ParticleMethods.jl",
         assets=String[],
     ),
     pages=[
@@ -28,5 +28,5 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/JuliaGNI/Particles.jl",
+    repo="github.com/JuliaGNI/ParticleMethods.jl",
 )

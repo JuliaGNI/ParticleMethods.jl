@@ -3,8 +3,8 @@
 using GeometricIntegrators
 using ProgressMeter
 
-# import Particles package
-using Particles
+# import ParticleMethods package
+using ParticleMethods
 
 # import HDF5 package for storing solution
 using HDF5
