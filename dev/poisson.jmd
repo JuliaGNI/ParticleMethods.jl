@@ -1,5 +1,5 @@
 ```@meta
-CurrentModule = Particles
+CurrentModule = ParticleMethods
 ```
 
 # Poisson Solvers
@@ -7,7 +7,7 @@ CurrentModule = Particles
 
 ```julia
 using Distributions
-using Particles
+using ParticleMethods
 using Plots
 using Random
 using StatsBase
