@@ -2,7 +2,7 @@
 CurrentModule = ParticleMethods
 ```
 
-# Particles.jl
+# ParticlesMethods.jl
 
 
 ## Installation
