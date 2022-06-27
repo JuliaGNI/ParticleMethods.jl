@@ -13,7 +13,6 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
-        "Poisson Solvers" => "poisson.md",
         "Library" => "library.md",
     ],
 )
