@@ -1,14 +1,5 @@
 using ParticleMethods
 using Documenter
-using Weave
-
-ENV["GKSwstype"] = "100"
-
-
-weave("src/poisson.jmd",
-         out_path = "src",
-         doctype = "github")
-
 
 makedocs(;
     modules=[ParticleMethods],

@@ -2,7 +2,7 @@
 CurrentModule = ParticleMethods
 ```
 
-# Particles Library Functions
+# ParticleMethods Library Functions
 
 ```@autodocs
 Modules = [ParticleMethods]

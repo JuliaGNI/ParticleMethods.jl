@@ -3,6 +3,8 @@ module ParticleMethods
 using HDF5
 using HDF5: H5DataStore
 
+using PoissonSolvers
+
 using StaticArrays: MVector
 
 
@@ -18,23 +20,6 @@ include("particle_list.jl")
 
 export ParticleList
 export eachparticle
-
-
-include("poisson.jl")
-
-export PoissonSolver
-export solve!, eval_density, eval_potential, eval_field
-
-
-include("poisson_fft.jl")
-
-export PoissonSolverFFT
-
-
-include("splines.jl")
-include("poisson_splines.jl")
-
-export PoissonSolverPBSplines
 
 
 include("vlasov_poisson.jl")
