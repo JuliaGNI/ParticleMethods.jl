@@ -90,7 +90,7 @@ plh5 = ParticleList(h5file)
 @test plh5.v == pl.v
 @test plh5.z == pl.z
 
-@test plh5[1] == pl[1] # TODO activate once parameters are stored and read
+@test plh5[1] == pl[1]
 @test plh5[1,1] == pl[1,1]
 @test plh5[1,:] == pl[1,:]
 @test plh5[:,1] == pl[:,1]

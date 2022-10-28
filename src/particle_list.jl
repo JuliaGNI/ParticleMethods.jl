@@ -48,6 +48,15 @@ function ParticleList(x::AbstractVector{DT}, v::AbstractVector{DT}, w::AbstractV
     ParticleList(reshape(x, (1,length(x))), reshape(v, (1,length(v))), reshape(w, (1,length(w))); kwargs...)
 end
 
+Base.:(==)(pl1::ParticleList{T1,ST1}, pl2::ParticleList{T2,ST2}) where {T1,T2,ST1,ST2} = (
+                        T1 == T2 && ST1 == ST2
+                     && pl1.list      == pl2.list
+                     && pl1.views     == pl2.views
+                     && pl1.params    == pl2.params
+                     && pl1.particles == pl2.particles
+                     && pl1.variables == pl2.variables
+                     && pl1.indices   == pl2.indices)
+
 @inline function Base.hasproperty(::ParticleList{T,ST,VT,PT}, s::Symbol) where {T,ST,VT,PT}
     hasfield(VT, s) || hasfield(PT, s) || hasfield(Particle, s)
 end
