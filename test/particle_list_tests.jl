@@ -1,4 +1,7 @@
 
+using HDF5
+using ParticleMethods: _sort_ntuple
+
 
 # test constructors
 np = 10
@@ -35,7 +38,7 @@ pl = ParticleList(pa; variables = vars, parameters = params)
 @test pl.z == view(pl.list, 1:6, :)
 
 # test particle vector
-@test pl.particles == [Particle(view(pa, :, i); variables = vars, parameters = params) for i in axes(pa, 2)]
+@test pl.particles == [Particle(view(pa, :, i); variables = _sort_ntuple(vars), parameters = params) for i in axes(pa, 2)]
 
 # test variable views
 @test pl.variables.x == [view(pa, 1:3, i) for i in axes(pa,2)]
@@ -70,3 +73,24 @@ for p in pl
     global i += 1
     @test p == pl[i]
 end
+
+# test HDF5 methods
+h5file = "temp.h5"
+
+h5open(h5file, "w") do file
+    ParticleMethods.h5save(file, pl)
+end
+
+plh5 = ParticleList(h5file)
+
+@test plh5.indices == pl.indices
+@test plh5.params == pl.params
+
+@test plh5.x == pl.x
+@test plh5.v == pl.v
+@test plh5.z == pl.z
+
+@test plh5[1] == pl[1] # TODO activate once parameters are stored and read
+@test plh5[1,1] == pl[1,1]
+@test plh5[1,:] == pl[1,:]
+@test plh5[:,1] == pl[:,1]
