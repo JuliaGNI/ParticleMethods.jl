@@ -18,5 +18,7 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/JuliaGNI/ParticleMethods.jl",
+    repo   = "github.com/JuliaGNI/ParticleMethods.jl",
+    devurl = "latest",
+    devbranch = "main",
 )
