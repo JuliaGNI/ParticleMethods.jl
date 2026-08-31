@@ -1,12 +1,12 @@
 
 _tuple_to_range(indices) = indices[begin]:indices[end]
 
-_sort_names(::NamedTuple{N,T}) where {N,T} = Tuple(sort([N...]))
+_sort_names(::NamedTuple{N, T}) where {N, T} = Tuple(sort([N...]))
 
 _sort_ntuple(nt::NamedTuple) = NamedTuple{_sort_names(nt)}(nt)
 
-
-struct ParticleList{T, ST <: AbstractMatrix{T}, VT <: NamedTuple, PT <: NamedTuple, PART <: AbstractVector, VART <: NamedTuple, IND <: NamedTuple}
+struct ParticleList{T, ST <: AbstractMatrix{T}, VT <: NamedTuple, PT <: NamedTuple,
+    PART <: AbstractVector, VART <: NamedTuple, IND <: NamedTuple}
     list::ST
     views::VT
     params::PT
@@ -18,7 +18,9 @@ struct ParticleList{T, ST <: AbstractMatrix{T}, VT <: NamedTuple, PT <: NamedTup
         @assert isdisjoint(fieldnames(ParticleList), keys(views))
         @assert isdisjoint(fieldnames(ParticleList), keys(params))
         @assert isdisjoint(keys(views), keys(params))
-        new{eltype(list), typeof(list), typeof(views), typeof(params), typeof(particles), typeof(variables), typeof(indices)}(list, views, params, particles, variables, indices)
+        new{eltype(list), typeof(list), typeof(views), typeof(params),
+            typeof(particles), typeof(variables), typeof(indices)}(
+            list, views, params, particles, variables, indices)
     end
 end
 
@@ -26,7 +28,8 @@ function ParticleList(list::AbstractMatrix; variables = NamedTuple(), parameters
     svariables = _sort_ntuple(variables)
     views = map(idx_range -> view(list, idx_range, :), svariables)
     vars = map(idx_range -> [view(list, idx_range, i) for i in axes(list, 2)], svariables)
-    particles = [Particle(p; variables = svariables, parameters = parameters) for p in eachcol(list)]
+    particles = [Particle(p; variables = svariables, parameters = parameters)
+                 for p in eachcol(list)]
     ParticleList(list, views, parameters, particles, vars, svariables)
 end
 
@@ -35,33 +38,40 @@ function ParticleList(DT::DataType, np::Int, nd::Int; kwargs...)
 end
 
 function ParticleList(x::AbstractArray{DT}, v::AbstractArray{DT}, w::AbstractArray{DT}; kwargs...) where {DT}
-    vars = ( 
-            x = 1:size(x,1),
-            v = size(x,1)+1:size(x,1)+size(v,1),
-            z = 1:size(x,1)+size(v,1),
-            w = size(x,1)+size(v,1)+1:size(x,1)+size(v,1)+size(w,1),
-           )
-    ParticleList(vcat(x,v,w); variables = vars, kwargs...)
+    vars = (
+        x = 1:size(x, 1),
+        v = (size(x, 1) + 1):(size(x, 1) + size(v, 1)),
+        z = 1:(size(x, 1) + size(v, 1)),
+        w = (size(x, 1) + size(v, 1) + 1):(size(x, 1) + size(v, 1) + size(w, 1))
+    )
+    ParticleList(vcat(x, v, w); variables = vars, kwargs...)
 end
 
 function ParticleList(x::AbstractVector{DT}, v::AbstractVector{DT}, w::AbstractVector{DT}; kwargs...) where {DT}
-    ParticleList(reshape(x, (1,length(x))), reshape(v, (1,length(v))), reshape(w, (1,length(w))); kwargs...)
+    ParticleList(
+        reshape(x, (1, length(x))), reshape(v, (1, length(v))), reshape(w, (
+            1, length(w))); kwargs...)
 end
 
-Base.:(==)(pl1::ParticleList{T1,ST1}, pl2::ParticleList{T2,ST2}) where {T1,T2,ST1,ST2} = (
-                        T1 == T2 && ST1 == ST2
-                     && pl1.list      == pl2.list
-                     && pl1.views     == pl2.views
-                     && pl1.params    == pl2.params
-                     && pl1.particles == pl2.particles
-                     && pl1.variables == pl2.variables
-                     && pl1.indices   == pl2.indices)
+function Base.:(==)(pl1::ParticleList{T1, ST1}, pl2::ParticleList{
+        T2, ST2}) where {T1, T2, ST1, ST2}
+    (
+        T1 == T2 && ST1 == ST2
+        && pl1.list == pl2.list
+        && pl1.views == pl2.views
+        && pl1.params == pl2.params
+        && pl1.particles == pl2.particles
+        && pl1.variables == pl2.variables
+        && pl1.indices == pl2.indices)
+end
 
-@inline function Base.hasproperty(::ParticleList{T,ST,VT,PT}, s::Symbol) where {T,ST,VT,PT}
+@inline function Base.hasproperty(::ParticleList{T, ST, VT, PT}, s::Symbol) where {
+        T, ST, VT, PT}
     hasfield(VT, s) || hasfield(PT, s) || hasfield(Particle, s)
 end
 
-@inline function Base.getproperty(p::ParticleList{T,ST,VT,PT}, s::Symbol) where {T, ST, VT, PT}
+@inline function Base.getproperty(p::ParticleList{T, ST, VT, PT}, s::Symbol) where {
+        T, ST, VT, PT}
     if hasfield(VT, s)
         return getfield(p, :views)[s]
     elseif hasfield(PT, s)
@@ -93,8 +103,7 @@ Base.eachindex(pl::ParticleList) = eachindex(pl.particles)
 
 Base.iterate(pl::ParticleList) = (pl[1], 1)
 
-Base.iterate(pl::ParticleList, i::Int) = i < length(pl) ? (pl[i+1], i+1) : nothing
-
+Base.iterate(pl::ParticleList, i::Int) = i < length(pl) ? (pl[i + 1], i+1) : nothing
 
 function ParticleList(h5::H5DataStore, path::AbstractString = "/")
     group = h5[path]

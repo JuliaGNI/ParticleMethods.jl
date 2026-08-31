@@ -14,14 +14,17 @@ p2 = Particle(eltype(ps), length(ps); variables = vars, parameters = params)
 @test p1.params === p2.params === params
 
 # test assertions
-@test_throws AssertionError Particle(ps; variables = (z = 1:6, w = 7), parameters = (a = 1, z = 2))
-@test_throws AssertionError Particle(ps; variables = (z = 1:6, state = 7), parameters = (a = 1, b = 2))
-@test_throws AssertionError Particle(ps; variables = (z = 1:6, w = 7), parameters = (a = 1, state = 2))
-
+@test_throws AssertionError Particle(ps; variables = (z = 1:6, w = 7), parameters = (
+    a = 1, z = 2))
+@test_throws AssertionError Particle(ps; variables = (z = 1:6, state = 7), parameters = (
+    a = 1, b = 2))
+@test_throws AssertionError Particle(ps; variables = (z = 1:6, w = 7), parameters = (
+    a = 1, state = 2))
 
 # test getproperty
 s = rand(7)
-p = Particle(s; variables = (x = 1:3, v = 4:6, z = 1:6, w = 7), parameters = (a = 1, b = 1.0))
+p = Particle(s; variables = (x = 1:3, v = 4:6, z = 1:6, w = 7), parameters = (
+    a = 1, b = 1.0))
 
 # test state vector
 @test p.state === s

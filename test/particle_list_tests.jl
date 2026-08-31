@@ -2,7 +2,6 @@
 using HDF5
 using ParticleMethods: _sort_ntuple
 
-
 # test constructors
 np = 10
 nd = 6
@@ -20,10 +19,12 @@ l2 = ParticleList(eltype(pa), np, nd; variables = vars)
 @test l1.params === l2.params
 
 # test assertions
-@test_throws AssertionError ParticleList(pa; variables = (x = 1:3, v = 4:6), parameters = (a = 1, x = 2))
-@test_throws AssertionError ParticleList(pa; variables = (x = 1:3, list = 4:6), parameters = (a = 1, b = 2))
-@test_throws AssertionError ParticleList(pa; variables = (x = 1:3, v = 4:6), parameters = (a = 1, list = 2))
-
+@test_throws AssertionError ParticleList(pa; variables = (x = 1:3, v = 4:6), parameters = (
+    a = 1, x = 2))
+@test_throws AssertionError ParticleList(pa; variables = (x = 1:3, list = 4:6), parameters = (
+    a = 1, b = 2))
+@test_throws AssertionError ParticleList(pa; variables = (x = 1:3, v = 4:6), parameters = (
+    a = 1, list = 2))
 
 # test getproperty
 pa = rand(nd, np)
@@ -38,12 +39,14 @@ pl = ParticleList(pa; variables = vars, parameters = params)
 @test pl.z == view(pl.list, 1:6, :)
 
 # test particle vector
-@test pl.particles == [Particle(view(pa, :, i); variables = _sort_ntuple(vars), parameters = params) for i in axes(pa, 2)]
+@test pl.particles ==
+      [Particle(view(pa, :, i); variables = _sort_ntuple(vars), parameters = params)
+       for i in axes(pa, 2)]
 
 # test variable views
-@test pl.variables.x == [view(pa, 1:3, i) for i in axes(pa,2)]
-@test pl.variables.v == [view(pa, 4:6, i) for i in axes(pa,2)]
-@test pl.variables.z == [view(pa, 1:6, i) for i in axes(pa,2)]
+@test pl.variables.x == [view(pa, 1:3, i) for i in axes(pa, 2)]
+@test pl.variables.v == [view(pa, 4:6, i) for i in axes(pa, 2)]
+@test pl.variables.z == [view(pa, 1:6, i) for i in axes(pa, 2)]
 
 # test parameters
 @test pl.a == params.a
@@ -56,9 +59,9 @@ pl = ParticleList(pa; variables = vars, parameters = params)
 
 # test getindex methods
 @test pl[1] == pl.particles[1]
-@test pl[1,1] == pl.list[1,1] == pa[1,1]
-@test pl[1,:] == pl.list[1,:] == pa[1,:]
-@test pl[:,1] == pl.list[:,1] == pa[:,1]
+@test pl[1, 1] == pl.list[1, 1] == pa[1, 1]
+@test pl[1, :] == pl.list[1, :] == pa[1, :]
+@test pl[:, 1] == pl.list[:, 1] == pa[:, 1]
 
 # test setindex methods
 # .
@@ -91,6 +94,6 @@ plh5 = ParticleList(h5file)
 @test plh5.z == pl.z
 
 @test plh5[1] == pl[1]
-@test plh5[1,1] == pl[1,1]
-@test plh5[1,:] == pl[1,:]
-@test plh5[:,1] == pl[:,1]
+@test plh5[1, 1] == pl[1, 1]
+@test plh5[1, :] == pl[1, :]
+@test plh5[:, 1] == pl[:, 1]

@@ -1,7 +1,6 @@
 
 import Base.hasproperty, Base.getproperty
 
-
 struct Particle{T, ST <: AbstractVector{T}, VT <: NamedTuple, PT <: NamedTuple}
     state::ST
     views::VT
@@ -24,17 +23,21 @@ function Particle(DT, len; kwargs...)
     Particle(MVector{len}(zeros(DT, len)); kwargs...)
 end
 
-Base.:(==)(p1::Particle{T1,ST1}, p2::Particle{T2,ST2}) where {T1,T2,ST1,ST2} = (
-                        T1 == T2 && ST1 == ST2
-                     && p1.state  == p2.state
-                     && p1.views  == p2.views
-                     && p1.params == p2.params)
+function Base.:(==)(p1::Particle{T1, ST1}, p2::Particle{T2, ST2}) where {T1, T2, ST1, ST2}
+    (
+        T1 == T2 && ST1 == ST2
+        && p1.state == p2.state
+        && p1.views == p2.views
+        && p1.params == p2.params)
+end
 
-@inline function Base.hasproperty(::Particle{T,ST,VT,PT}, s::Symbol) where {T,ST,VT,PT}
+@inline function Base.hasproperty(::Particle{T, ST, VT, PT}, s::Symbol) where {
+        T, ST, VT, PT}
     hasfield(VT, s) || hasfield(PT, s) || hasfield(Particle, s)
 end
 
-@inline function Base.getproperty(p::Particle{T,ST,VT,PT}, s::Symbol) where {T, ST, VT, PT}
+@inline function Base.getproperty(p::Particle{T, ST, VT, PT}, s::Symbol) where {
+        T, ST, VT, PT}
     if hasfield(VT, s)
         return getfield(p, :views)[s]
     elseif hasfield(PT, s)
