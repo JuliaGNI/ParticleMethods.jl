@@ -17,6 +17,23 @@ first entry is written.
 
 ### New Features
 
+- **`scripts/particle_list_profile.jl` is under version control**, and lives in `scripts/` rather
+  than `test/`. It builds a `ParticleList` of 10⁶ particles with six components and profiles an
+  in-place update over `pl.x` and `pl.v` under `--track-allocation`. It measures rather than
+  asserts, so `test/` was the wrong home: a profiling harness that runs as part of the suite costs
+  a minute and checks nothing.
+
+### Changed
+
+- **`makeclean.sh` is tracked.** The same script is tracked in the other ten repositories that
+  carry it, and this copy is byte-identical to them; this package was the only one where it had
+  never been added.
+- **`.gitignore` now covers `*.h5` and `*.hdf5`.** The suite writes `temp.h5`
+  (`test/particle_list_tests.jl:81`) and never removes it, so it sat untracked and visible in
+  every `git status`. `VlasovMethods` already ignored both patterns.
+
+### New Features
+
 ### Bug Fixes
 
 ### Breaking Changes
