@@ -31,6 +31,14 @@ end
     @test iterate(pl) === nothing
 end
 
+# collect must yield the particles; eltype stays the numeric element type
+@testset "collect over a ParticleList yields its particles" begin
+    pa = rand(6, 4)
+    pl = ParticleList(pa; variables = (x = 1:3, v = 4:6))
+    @test collect(pl) == pl.particles
+    @test eltype(pl) == Float64
+end
+
 # HDF5 round-trip must preserve a scalar variable index, not widen it
 # to a 1-element range
 @testset "HDF5 round-trip preserves a scalar variable index" begin

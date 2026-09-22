@@ -85,6 +85,9 @@ end
 
 Base.eltype(::ParticleList{T}) where {T} = T
 
+# iteration yields `Particle`s, not elements of type `eltype`
+Base.IteratorEltype(::Type{<:ParticleList}) = Base.EltypeUnknown()
+
 Base.length(pl::ParticleList) = length(pl.particles)
 
 Base.size(pl::ParticleList) = size(pl.list)

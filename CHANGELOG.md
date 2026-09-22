@@ -53,6 +53,9 @@ first entry is written.
 - **`Base.iterate(pl::ParticleList)` terminates correctly.** Previously it returned `(pl[1], 1)`
   unconditionally, so iterating an empty `ParticleList` threw `BoundsError` instead of returning
   `nothing`.
+- **`collect(pl::ParticleList)` returns the particles.** It threw a `MethodError`, because
+  `eltype` gives the numeric element type but iteration yields `Particle`s. `ParticleList` now
+  declares `Base.IteratorEltype` as `EltypeUnknown()`, and `eltype` still gives the numeric type.
 - **`eachparticle` is now defined.** It was exported from the module but never defined, so calling it
   threw `UndefVarError`. It is defined as `eachparticle(pl::ParticleList) = pl.particles`.
 - **HDF5 round-trip preserves scalar vs. range indices.** Previously `h5save`/`ParticleList(::H5DataStore)`
