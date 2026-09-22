@@ -1,5 +1,7 @@
 
-_tuple_to_range(indices) = indices[begin]:indices[end]
+function _tuple_to_range(indices)
+    length(indices) == 1 ? indices[begin] : indices[begin]:indices[end]
+end
 
 _sort_names(::NamedTuple{N, T}) where {N, T} = Tuple(sort([N...]))
 
@@ -27,7 +29,10 @@ end
 function ParticleList(list::AbstractMatrix; variables = NamedTuple(), parameters = NamedTuple())
     svariables = _sort_ntuple(variables)
     views = map(idx_range -> view(list, idx_range, :), svariables)
-    vars = map(idx_range -> [view(list, idx_range, i) for i in axes(list, 2)], svariables)
+    vars = map(
+        idx_range -> idx_range isa Integer ? eachslice(view(list, idx_range, :); dims = 1) :
+                     eachcol(view(list, idx_range, :)),
+        svariables)
     particles = [Particle(p; variables = svariables, parameters = parameters)
                  for p in eachcol(list)]
     ParticleList(list, views, parameters, particles, vars, svariables)
@@ -67,7 +72,7 @@ end
 
 @inline function Base.hasproperty(::ParticleList{T, ST, VT, PT}, s::Symbol) where {
         T, ST, VT, PT}
-    hasfield(VT, s) || hasfield(PT, s) || hasfield(Particle, s)
+    hasfield(VT, s) || hasfield(PT, s) || hasfield(ParticleList, s)
 end
 
 @inline function Base.getproperty(p::ParticleList{T, ST, VT, PT}, s::Symbol) where {
@@ -101,7 +106,9 @@ Base.setindex!(pl::ParticleList, X, I...) = setindex!(pl.list, X, I...)
 
 Base.eachindex(pl::ParticleList) = eachindex(pl.particles)
 
-Base.iterate(pl::ParticleList) = (pl[1], 1)
+eachparticle(pl::ParticleList) = pl.particles
+
+Base.iterate(pl::ParticleList) = isempty(pl.particles) ? nothing : (pl[1], 1)
 
 Base.iterate(pl::ParticleList, i::Int) = i < length(pl) ? (pl[i + 1], i+1) : nothing
 
@@ -138,7 +145,7 @@ function h5save(h5::H5DataStore, p::ParticleList; path::AbstractString = "/")
 
     for key in keys(p.indices)
         inds = p.indices[key]
-        vars[string(key)] = [inds[begin], inds[end]]
+        vars[string(key)] = inds isa Integer ? [inds] : [inds[begin], inds[end]]
     end
 
     for key in keys(p.params)

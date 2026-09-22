@@ -11,4 +11,8 @@ using StaticArrays: MVector
     @testset "Particle Lists" begin
         include("particle_list_tests.jl")
     end
+
+    @testset "Defects" begin
+        include("defects_tests.jl")
+    end
 end

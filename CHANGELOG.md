@@ -31,10 +31,38 @@ first entry is written.
 - **`.gitignore` now covers `*.h5` and `*.hdf5`.** The suite writes `temp.h5`
   (`test/particle_list_tests.jl:81`) and never removes it, so it sat untracked and visible in
   every `git status`. `VlasovMethods` already ignored both patterns.
+- **`Particle(DT, len; kwargs...)` now returns fully inferred state.** The length-based constructor
+  previously built state as `MVector{len}(zeros(DT, len))`, using runtime `len::Int` as a type
+  parameter and making return type uninferrable. It now builds plain `zeros(DT, len)` (a `Vector`),
+  which is fully inferred regardless of runtime length. The `state` field type remains generic
+  (`AbstractVector`), but this constructor's concrete return type is now correct.
+- **`ParticleList` constructor from matrix now builds variable views lazily.** Previously it eagerly
+  materialized, for every declared variable, a `Vector` of one `SubArray` view per particle — a
+  redundant representation of the underlying matrix. It now uses `eachcol`/`eachslice` over a single
+  view, yielding a zero-allocation `AbstractVector` with the same element type and values. Measured
+  at `np = 10⁶` particles, `nd = 6` components, three variables: allocation reduced from 328 MiB
+  to 184 MiB (44% reduction).
+- **`StaticArrays` removed from `[deps]` in Project.toml.** It remains in `[compat]` and as a
+  test-only dependency in `[extras]` because `src/` no longer uses it after the `Particle(DT, len)`
+  fix: the `using StaticArrays: MVector` import in `src/ParticleMethods.jl` was removed as dead code.
+  `Aqua.test_stale_deps` now passes on this package.
 
 ### New Features
 
 ### Bug Fixes
+
+- **`Base.hasproperty(::ParticleList, s)` now checks the correct struct.** Previously it fell through
+  to `hasfield(Particle, s)` instead of `hasfield(ParticleList, s)`, so `hasproperty(pl, :list)` and
+  other `ParticleList`-only field names incorrectly returned `false`.
+- **`Base.iterate(pl::ParticleList)` terminates correctly.** Previously it returned `(pl[1], 1)`
+  unconditionally, so iterating an empty `ParticleList` threw `BoundsError` instead of returning
+  `nothing`.
+- **`eachparticle` is now defined.** It was exported from the module but never defined, so calling it
+  threw `UndefVarError`. It is defined as `eachparticle(pl::ParticleList) = pl.particles`.
+- **HDF5 round-trip preserves scalar vs. range indices.** Previously `h5save`/`ParticleList(::H5DataStore)`
+  converted a scalar variable index (e.g., `w = 7`) to a 1-element `UnitRange` (`7:7`), silently
+  changing type and shape. The write path now stores a 1-element array for scalars and 2-element for
+  ranges; the read path distinguishes them by length.
 
 ### Breaking Changes
 
