@@ -33,7 +33,7 @@ or  with a prescribed state,
 ```julia
 p = Particle(rand(7); variables = (x = 1:3, v = 4:6, z = 1:6, w = 7))
 ```
-The former constructor will default to using an `MVector` from StaticArrays.jl to store the particle state. The latter will use whichever vector type is specified by the user.
+The former constructor stores the particle state in a `Vector`. The latter will use whichever vector type is specified by the user.
 
 In both cases, the particle state is accessible via fields corresponding to the index ranges specified by the user:
 ```@repl

@@ -15,6 +15,13 @@ end
     pl = ParticleList(pa; variables = (x = 1:3, v = 4:6))
     @test hasproperty(pl, :list)
     @test hasproperty(pl, :indices)
+    @test !hasproperty(pl, :state)
+end
+
+# Particle(DT, len) must infer its return type: the length is a runtime value
+@testset "Particle(DT, len) is inferred" begin
+    p = @inferred Particle(Float64, 7)
+    @test p.state == zeros(7)
 end
 
 # iterate on an empty list must terminate instead of indexing pl[1]

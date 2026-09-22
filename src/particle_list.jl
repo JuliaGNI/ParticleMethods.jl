@@ -1,5 +1,5 @@
 
-function _tuple_to_range(indices)
+function _bounds_to_indices(indices)
     length(indices) == 1 ? indices[begin] : indices[begin]:indices[end]
 end
 
@@ -29,10 +29,7 @@ end
 function ParticleList(list::AbstractMatrix; variables = NamedTuple(), parameters = NamedTuple())
     svariables = _sort_ntuple(variables)
     views = map(idx_range -> view(list, idx_range, :), svariables)
-    vars = map(
-        idx_range -> idx_range isa Integer ? eachslice(view(list, idx_range, :); dims = 1) :
-                     eachcol(view(list, idx_range, :)),
-        svariables)
+    vars = map(v -> eachslice(v; dims = ndims(v)), views)
     particles = [Particle(p; variables = svariables, parameters = parameters)
                  for p in eachcol(list)]
     ParticleList(list, views, parameters, particles, vars, svariables)
@@ -106,6 +103,11 @@ Base.setindex!(pl::ParticleList, X, I...) = setindex!(pl.list, X, I...)
 
 Base.eachindex(pl::ParticleList) = eachindex(pl.particles)
 
+"""
+    eachparticle(pl::ParticleList)
+
+Return the vector of the `Particle`s in `pl`. Each particle is a view into a column of `pl.list`.
+"""
 eachparticle(pl::ParticleList) = pl.particles
 
 Base.iterate(pl::ParticleList) = isempty(pl.particles) ? nothing : (pl[1], 1)
@@ -119,7 +121,7 @@ function ParticleList(h5::H5DataStore, path::AbstractString = "/")
 
     vars = group["variables"]
     vinds = Symbol.(keys(vars))
-    vvals = (_tuple_to_range(read(vars[key])) for key in keys(vars))
+    vvals = (_bounds_to_indices(read(vars[key])) for key in keys(vars))
     variables = NamedTuple{Tuple(vinds)}(Tuple(vvals))
 
     pgroup = group["parameters"]

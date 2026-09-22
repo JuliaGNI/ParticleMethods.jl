@@ -31,21 +31,17 @@ first entry is written.
 - **`.gitignore` now covers `*.h5` and `*.hdf5`.** The suite writes `temp.h5`
   (`test/particle_list_tests.jl:81`) and never removes it, so it sat untracked and visible in
   every `git status`. `VlasovMethods` already ignored both patterns.
-- **`Particle(DT, len; kwargs...)` now returns fully inferred state.** The length-based constructor
-  previously built state as `MVector{len}(zeros(DT, len))`, using runtime `len::Int` as a type
-  parameter and making return type uninferrable. It now builds plain `zeros(DT, len)` (a `Vector`),
-  which is fully inferred regardless of runtime length. The `state` field type remains generic
-  (`AbstractVector`), but this constructor's concrete return type is now correct.
-- **`ParticleList` constructor from matrix now builds variable views lazily.** Previously it eagerly
-  materialized, for every declared variable, a `Vector` of one `SubArray` view per particle — a
-  redundant representation of the underlying matrix. It now uses `eachcol`/`eachslice` over a single
-  view, yielding a zero-allocation `AbstractVector` with the same element type and values. Measured
-  at `np = 10⁶` particles, `nd = 6` components, three variables: allocation reduced from 328 MiB
-  to 184 MiB (44% reduction).
-- **`StaticArrays` removed from `[deps]` in Project.toml.** It remains in `[compat]` and as a
-  test-only dependency in `[extras]` because `src/` no longer uses it after the `Particle(DT, len)`
-  fix: the `using StaticArrays: MVector` import in `src/ParticleMethods.jl` was removed as dead code.
-  `Aqua.test_stale_deps` now passes on this package.
+- **`ParticleList` constructor from matrix now builds variable views lazily.** Previously
+  it eagerly materialized, for every declared variable, a `Vector` of one `SubArray` view
+  per particle — a redundant representation of the underlying matrix. It now uses
+  `eachslice` over each variable's view, yielding a zero-allocation `AbstractVector` with
+  the same element type and values. Measured at `np = 10⁶` particles, `nd = 6`
+  components, three variables: allocation reduced from 328.0 MB to 184.0 MB (43.9%
+  reduction).
+- **`StaticArrays` removed from `[deps]` in Project.toml.** The `using StaticArrays: MVector` import
+  in `src/ParticleMethods.jl` was the only use in `src/` and was removed by the `Particle(DT, len)`
+  change. It remains in `[compat]` and as a test-only dependency in `[extras]` because the test suite
+  uses it. `Aqua.test_stale_deps` now passes on this package.
 
 ### New Features
 
@@ -62,8 +58,18 @@ first entry is written.
 - **HDF5 round-trip preserves scalar vs. range indices.** Previously `h5save`/`ParticleList(::H5DataStore)`
   converted a scalar variable index (e.g., `w = 7`) to a 1-element `UnitRange` (`7:7`), silently
   changing type and shape. The write path now stores a 1-element array for scalars and 2-element for
-  ranges; the read path distinguishes them by length.
+  ranges; the read path distinguishes them by length. (An HDF5 file written before this change stores
+  `[i, i]` for a scalar index `i`, which reads back as the 1-element range `i:i` since the read path
+  uses length only.)
 
 ### Breaking Changes
+
+- **`Particle(DT, len; kwargs...)` now returns fully inferred state.** The length-based constructor
+  previously built state as `MVector{len}(zeros(DT, len))`, using runtime `len::Int` as a type
+  parameter and making return type uninferrable. It now builds plain `zeros(DT, len)` (a `Vector`),
+  which is fully inferred regardless of runtime length. The `state` field type remains generic
+  (`AbstractVector`), but this constructor's concrete return type is now correct. This changes
+  equality semantics: `Particle(Float64, 7) == Particle(MVector{7}(zeros(7)))` was `true` before
+  and is now `false`, because `==` requires the state types to match.
 
 ## Open Issues
