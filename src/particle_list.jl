@@ -113,9 +113,7 @@ Return the vector of the `Particle`s in `pl`. Each particle is a view into a col
 """
 eachparticle(pl::ParticleList) = pl.particles
 
-Base.iterate(pl::ParticleList) = isempty(pl.particles) ? nothing : (pl[1], 1)
-
-Base.iterate(pl::ParticleList, i::Int) = i < length(pl) ? (pl[i + 1], i+1) : nothing
+Base.iterate(pl::ParticleList, state...) = iterate(pl.particles, state...)
 
 function ParticleList(h5::H5DataStore, path::AbstractString = "/")
     group = h5[path]

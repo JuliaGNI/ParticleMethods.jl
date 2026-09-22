@@ -42,8 +42,11 @@ first entry is written.
   in `src/ParticleMethods.jl` was the only use in `src/` and was removed by the `Particle(DT, len)`
   change. It remains in `[compat]` and as a test-only dependency in `[extras]` because the test suite
   uses it. `Aqua.test_stale_deps` now passes on this package.
-
-### New Features
+- **`SafeTestsets` removed from the test dependencies.** No test file used it. `Test` has a
+  `[compat]` entry, so every test-only dependency now declares one.
+- **`Base.iterate(pl::ParticleList, state)` forwards to `pl.particles`.** One method covers the
+  first and the later steps, and the state is the state of `iterate` over the particle vector:
+  the index of the next particle, not of the last one.
 
 ### Bug Fixes
 
