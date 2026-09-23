@@ -47,6 +47,14 @@ first entry is written.
 - **`Base.iterate(pl::ParticleList, state)` forwards to `pl.particles`.** One method covers the
   first and the later steps, and the state is the state of `iterate` over the particle vector:
   the index of the next particle, not of the last one.
+- **Aqua.jl 0.8 added as a test dependency.** `Aqua.test_all(ParticleMethods)` runs inside
+  its own `@testset "Aqua"` in `test/runtests.jl`, so a failing check fails the suite. All
+  11 checks pass with Aqua 0.8.18, among them undefined exports, piracy, ambiguities and
+  stale dependencies.
+- **Docstrings written for the module, `Particle` and `ParticleList`.** These were the only
+  exported names without one (`eachparticle` had one).
+  `Base.Docs.undocumented_names(ParticleMethods)` is now empty, and the library page renders
+  all four.
 
 ### Bug Fixes
 

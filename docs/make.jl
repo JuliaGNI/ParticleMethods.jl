@@ -6,7 +6,6 @@ makedocs(;
     authors = "Michael Kraus",
     repo = "https://github.com/JuliaGNI/ParticleMethods.jl/blob/{commit}{path}#L{line}",
     sitename = "ParticleMethods.jl",
-    checkdocs = :exports,
     format = Documenter.HTML(;
         prettyurls = get(ENV, "CI", "false") == "true",
         canonical = "https://juliagni.github.io/ParticleMethods.jl",
