@@ -1,6 +1,24 @@
 
 import Base.hasproperty, Base.getproperty
 
+"""
+    Particle(state; variables = NamedTuple(), parameters = NamedTuple())
+    Particle(DT, len; variables = NamedTuple(), parameters = NamedTuple())
+
+A particle with the state vector `state`, or a zero state of element type `DT` and length `len`.
+
+`variables` maps names to indices or index ranges into `state`, and `parameters` maps names to
+values. Each name is a property of the particle: `p.x` is a view into `state` for a variable `x`,
+and the stored value for a parameter. The names must not repeat each other or the field names
+`state`, `views` and `params`.
+
+# Example
+
+```julia
+p = Particle(Float64, 7; variables = (x = 1:3, v = 4:6, w = 7))
+p.x    # view(p.state, 1:3)
+```
+"""
 struct Particle{T, ST <: AbstractVector{T}, VT <: NamedTuple, PT <: NamedTuple}
     state::ST
     views::VT
