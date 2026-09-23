@@ -1,3 +1,9 @@
+"""
+    ParticleMethods
+
+Data structures for particles and particle lists: [`Particle`](@ref) and
+[`ParticleList`](@ref), with named access to parts of the state and to parameters.
+"""
 module ParticleMethods
 
 using HDF5
