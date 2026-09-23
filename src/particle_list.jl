@@ -19,7 +19,8 @@ particle, and `pl[i]` is that particle as a [`Particle`](@ref).
 
 `variables` maps names to row indices or row ranges of `list`, and `parameters` maps names to
 values. Each name is a property of the list: `pl.x` is a view into the rows of a variable `x` for
-all particles, and the stored value for a parameter.
+all particles, and the stored value for a parameter. The names must not repeat each other or the
+field names `list`, `views`, `params`, `particles`, `variables` and `indices`.
 
 The second form makes a zero list of element type `DT` with `np` particles of `nd` components.
 The third form stacks positions `x`, velocities `v` and weights `w`, and defines the variables
