@@ -7,6 +7,26 @@ _sort_names(::NamedTuple{N, T}) where {N, T} = Tuple(sort([N...]))
 
 _sort_ntuple(nt::NamedTuple) = NamedTuple{_sort_names(nt)}(nt)
 
+"""
+    ParticleList(list::AbstractMatrix; variables = NamedTuple(), parameters = NamedTuple())
+    ParticleList(DT, np, nd; variables = NamedTuple(), parameters = NamedTuple())
+    ParticleList(x, v, w; parameters = NamedTuple())
+    ParticleList(h5::H5DataStore, path = "/")
+    ParticleList(fpath::AbstractString, path = "/")
+
+A list of particles, stored as the columns of the matrix `list`. Each column is the state of one
+particle, and `pl[i]` is that particle as a [`Particle`](@ref).
+
+`variables` maps names to row indices or row ranges of `list`, and `parameters` maps names to
+values. Each name is a property of the list: `pl.x` is a view into the rows of a variable `x` for
+all particles, and the stored value for a parameter. The names must not repeat each other or the
+field names `list`, `views`, `params`, `particles`, `variables` and `indices`.
+
+The second form makes a zero list of element type `DT` with `np` particles of `nd` components.
+The third form stacks positions `x`, velocities `v` and weights `w`, and defines the variables
+`x`, `v`, `z` (positions and velocities) and `w`. The last two forms read a list that `h5save`
+wrote, from a group `path` of an HDF5 file or from the file at `fpath`.
+"""
 struct ParticleList{T, ST <: AbstractMatrix{T}, VT <: NamedTuple, PT <: NamedTuple,
     PART <: AbstractVector, VART <: NamedTuple, IND <: NamedTuple}
     list::ST
