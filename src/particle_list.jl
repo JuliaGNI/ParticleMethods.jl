@@ -1,5 +1,7 @@
 
-_tuple_to_range(indices) = indices[begin]:indices[end]
+function _bounds_to_indices(indices)
+    length(indices) == 1 ? indices[begin] : indices[begin]:indices[end]
+end
 
 _sort_names(::NamedTuple{N, T}) where {N, T} = Tuple(sort([N...]))
 
@@ -27,7 +29,7 @@ end
 function ParticleList(list::AbstractMatrix; variables = NamedTuple(), parameters = NamedTuple())
     svariables = _sort_ntuple(variables)
     views = map(idx_range -> view(list, idx_range, :), svariables)
-    vars = map(idx_range -> [view(list, idx_range, i) for i in axes(list, 2)], svariables)
+    vars = map(v -> eachslice(v; dims = ndims(v)), views)
     particles = [Particle(p; variables = svariables, parameters = parameters)
                  for p in eachcol(list)]
     ParticleList(list, views, parameters, particles, vars, svariables)
@@ -67,7 +69,7 @@ end
 
 @inline function Base.hasproperty(::ParticleList{T, ST, VT, PT}, s::Symbol) where {
         T, ST, VT, PT}
-    hasfield(VT, s) || hasfield(PT, s) || hasfield(Particle, s)
+    hasfield(VT, s) || hasfield(PT, s) || hasfield(ParticleList, s)
 end
 
 @inline function Base.getproperty(p::ParticleList{T, ST, VT, PT}, s::Symbol) where {
@@ -82,6 +84,9 @@ end
 end
 
 Base.eltype(::ParticleList{T}) where {T} = T
+
+# iteration yields `Particle`s, not elements of type `eltype`
+Base.IteratorEltype(::Type{<:ParticleList}) = Base.EltypeUnknown()
 
 Base.length(pl::ParticleList) = length(pl.particles)
 
@@ -101,9 +106,14 @@ Base.setindex!(pl::ParticleList, X, I...) = setindex!(pl.list, X, I...)
 
 Base.eachindex(pl::ParticleList) = eachindex(pl.particles)
 
-Base.iterate(pl::ParticleList) = (pl[1], 1)
+"""
+    eachparticle(pl::ParticleList)
 
-Base.iterate(pl::ParticleList, i::Int) = i < length(pl) ? (pl[i + 1], i+1) : nothing
+Return the vector of the `Particle`s in `pl`. Each particle is a view into a column of `pl.list`.
+"""
+eachparticle(pl::ParticleList) = pl.particles
+
+Base.iterate(pl::ParticleList, state...) = iterate(pl.particles, state...)
 
 function ParticleList(h5::H5DataStore, path::AbstractString = "/")
     group = h5[path]
@@ -112,7 +122,7 @@ function ParticleList(h5::H5DataStore, path::AbstractString = "/")
 
     vars = group["variables"]
     vinds = Symbol.(keys(vars))
-    vvals = (_tuple_to_range(read(vars[key])) for key in keys(vars))
+    vvals = (_bounds_to_indices(read(vars[key])) for key in keys(vars))
     variables = NamedTuple{Tuple(vinds)}(Tuple(vvals))
 
     pgroup = group["parameters"]
@@ -138,7 +148,7 @@ function h5save(h5::H5DataStore, p::ParticleList; path::AbstractString = "/")
 
     for key in keys(p.indices)
         inds = p.indices[key]
-        vars[string(key)] = [inds[begin], inds[end]]
+        vars[string(key)] = inds isa Integer ? [inds] : [inds[begin], inds[end]]
     end
 
     for key in keys(p.params)

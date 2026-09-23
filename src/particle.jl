@@ -20,7 +20,7 @@ function Particle(state; variables = NamedTuple(), parameters = NamedTuple())
 end
 
 function Particle(DT, len; kwargs...)
-    Particle(MVector{len}(zeros(DT, len)); kwargs...)
+    Particle(zeros(DT, len); kwargs...)
 end
 
 function Base.:(==)(p1::Particle{T1, ST1}, p2::Particle{T2, ST2}) where {T1, T2, ST1, ST2}
