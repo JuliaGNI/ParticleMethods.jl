@@ -1,23 +1,10 @@
-using ParticleMethods
-using Test
+using SafeTestsets
 
-using Aqua: Aqua
-using StaticArrays: MVector
+const GROUPS = isempty(ARGS) ? ["core", "slow"] : ARGS
 
-@testset "ParticleMethods.jl" begin
-    @testset "Aqua" begin
-        Aqua.test_all(ParticleMethods)
-    end
-
-    @testset "Particles" begin
-        include("particle_tests.jl")
-    end
-
-    @testset "Particle Lists" begin
-        include("particle_list_tests.jl")
-    end
-
-    @testset "Defects" begin
-        include("defects_tests.jl")
-    end
+if "core" in GROUPS
+    @safetestset "Aqua" include("quality/aqua.jl")
+    @safetestset "Particles" include("particle.jl")
+    @safetestset "Particle Lists" include("particle_list.jl")
+    @safetestset "Defects" include("defects.jl")
 end

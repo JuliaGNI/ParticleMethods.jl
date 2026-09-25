@@ -1,3 +1,9 @@
+using ParticleMethods
+using Random
+using StaticArrays: MVector
+using Test
+
+Random.seed!(1234)
 
 # test constructors
 l = 7
