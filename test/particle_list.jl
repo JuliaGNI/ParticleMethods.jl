@@ -1,6 +1,10 @@
-
 using HDF5
+using ParticleMethods
 using ParticleMethods: _sort_ntuple
+using Random
+using Test
+
+Random.seed!(1234)
 
 # test constructors
 np = 10

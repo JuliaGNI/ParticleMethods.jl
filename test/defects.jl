@@ -1,5 +1,9 @@
-
 using HDF5
+using ParticleMethods
+using Random
+using Test
+
+Random.seed!(1234)
 
 # eachparticle is exported and returns the particle vector
 @testset "eachparticle is defined" begin
