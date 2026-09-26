@@ -94,5 +94,3 @@ first entry is written.
   (`AbstractVector`), but this constructor's concrete return type is now correct. This changes
   equality semantics: `Particle(Float64, 7) == Particle(MVector{7}(zeros(7)))` was `true` before
   and is now `false`, because `==` requires the state types to match.
-
-## Open Issues
