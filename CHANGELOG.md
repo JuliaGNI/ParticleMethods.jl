@@ -60,8 +60,9 @@ first entry is written.
   source files. The Aqua checks are in `test/quality/aqua.jl`. `test/runtests.jl` holds one
   `@safetestset` per file in the `core` group, so each file runs in its own module, and
   `Pkg.test(test_args = ["core"])` selects a group; empty `ARGS` runs `core` and `slow`. Each
-  file has its own `using` statements and a fixed seed. The test dependencies are in
-  `test/Project.toml`, with `SafeTestsets` and `Random` added; the root `Project.toml` has no
+  file has its own `using` statements and a fixed seed where it draws random numbers. The
+  test dependencies are in `test/Project.toml`; `Random` is added, and the tests use
+  `SafeTestsets`. The root `Project.toml` has no
   `[extras]`, `[targets]` or test-only compat entries. The suite keeps its 81 tests.
 
 ### Bug Fixes
