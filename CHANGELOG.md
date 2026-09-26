@@ -55,16 +55,14 @@ first entry is written.
   exported names without one (`eachparticle` had one).
   `Base.Docs.undocumented_names(ParticleMethods)` is now empty, and the library page renders
   all four.
-- **Test suite reorganized to follow the project convention.** Test files renamed to mirror
-  `src/` structure (`test/particle.jl`, `test/particle_list.jl`, `test/defects.jl` for files
-  spanning multiple source modules; `test/quality/aqua.jl` for quality checks). `test/runtests.jl`
-  now uses `SafeTestsets` with a `GROUPS` constant (defaulting to `["core", "slow"]`), so each
-  test file runs in its own module. Test dependencies moved to `test/Project.toml` (adds
-  `SafeTestsets` and `Random`); the root `Project.toml` loses its `[extras]`,
-  `[targets]` and test-only compat entries.
-  Each test file has its own `using` statements and a fixed seed `Random.seed!(1234)`.
-  All 81 tests pass (Aqua 11, Particles 14, Particle Lists 44, Defects 12).
-  Group selection via `Pkg.test(test_args=["core"])` is now possible.
+- **The test suite follows the shared test convention.** The test files mirror `src/`:
+  `test/particle.jl`, `test/particle_list.jl`, and `test/defects.jl`, which spans several
+  source files. The Aqua checks are in `test/quality/aqua.jl`. `test/runtests.jl` holds one
+  `@safetestset` per file in the `core` group, so each file runs in its own module, and
+  `Pkg.test(test_args = ["core"])` selects a group; empty `ARGS` runs `core` and `slow`. Each
+  file has its own `using` statements and a fixed seed. The test dependencies are in
+  `test/Project.toml`, with `SafeTestsets` and `Random` added; the root `Project.toml` has no
+  `[extras]`, `[targets]` or test-only compat entries. The suite keeps its 81 tests.
 
 ### Bug Fixes
 
