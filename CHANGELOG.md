@@ -25,6 +25,11 @@ first entry is written.
 
 ### Changed
 
+- **`test/Project.toml` no longer carries a `[compat]` entry for `HDF5`** (`"0.16, 0.17"`).
+  `HDF5` is a dependency of the root `Project.toml`, whose `[compat]` bound governs the test
+  environment too. A test or docs project keeps `[compat]` entries only for its own test-only or
+  docs-only dependencies, because a copy of a root bound can only duplicate or narrow it, and a
+  duplicate drifts.
 - **`makeclean.sh` is tracked.** The same script is tracked in the other ten repositories that
   carry it, and this copy is byte-identical to them; this package was the only one where it had
   never been added.
