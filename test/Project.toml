@@ -12,7 +12,6 @@ ParticleMethods = {path = ".."}
 
 [compat]
 Aqua = "0.8"
-HDF5 = "0.16, 0.17"
 Random = "1"
 SafeTestsets = "0.1"
 StaticArrays = "1"
