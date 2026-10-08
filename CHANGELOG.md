@@ -25,6 +25,8 @@ first entry is written.
 
 ### Changed
 
+- **CI uploads coverage from the `Julia 1 - ubuntu-latest` job** instead of `Julia min`, and a
+  test job saves the Julia cache only when it succeeds.
 - **`test/Project.toml` no longer carries a `[compat]` entry for `HDF5`** (`"0.16, 0.17"`).
   `HDF5` is a dependency of the root `Project.toml`, whose `[compat]` bound governs the test
   environment too. A test or docs project keeps `[compat]` entries only for its own test-only or
