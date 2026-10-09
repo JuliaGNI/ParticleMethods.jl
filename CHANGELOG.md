@@ -25,6 +25,11 @@ first entry is written.
 
 ### Changed
 
+- **`test/defects.jl` moved to `test/integration/defects.jl`.** It tests `src/particle.jl`,
+  `src/particle_list.jl` and `src/hdf5_utils.jl`, whose deepest common directory is `src/`
+  itself. The test convention keeps a test file at the top level of `test/` only where it
+  mirrors `src/<name>.jl`, so a test that spans several top-level source files goes under
+  `test/integration/`. `test/runtests.jl` includes it from there, with the same label and group.
 - **CI uploads coverage from the `Julia 1 - ubuntu-latest` job** instead of `Julia min`, and a
   test job saves the Julia cache only when it succeeds.
 - **`test/Project.toml` no longer carries a `[compat]` entry for `HDF5`** (`"0.16, 0.17"`).
