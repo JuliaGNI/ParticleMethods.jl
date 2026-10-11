@@ -6,6 +6,7 @@ using Test
     @test_throws ArgumentError Species(:n, 0.0, 0.0)
     @test_throws ArgumentError Species(:n, 1.0, -1.0)
     @test_throws ArgumentError Species(:n, 1.0, 0.0)
+    @test_throws ArgumentError Species(:n, 1.0, NaN)
 
     s = Species(:n, 0.0, 1.0)
     @test s isa Species{Float64}
@@ -20,7 +21,6 @@ end
     @test e isa Species{Float64}
     @test charge(e) == -1.0
     @test mass(e) == 0.5
-    @test species(e) === e
 
     i = Species(:i, 2, 4)
     @test i isa Species{Int}

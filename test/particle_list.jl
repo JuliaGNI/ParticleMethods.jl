@@ -149,6 +149,12 @@ _chargeweight(pl, i) = chargeweights(pl)[1, i]
     @test ParticleList(z; variables = vars, species = specieslist,
         speciesindex = Int32[1, 2, 1, 2, 2]) == pl
 
+    # the list copies the index, so a later write to the caller's vector leaves it valid
+    idx = copy(speciesindex)
+    pli = ParticleList(z; variables = vars, species = specieslist, speciesindex = idx)
+    idx[1] = 7
+    @test pli.speciesindex == speciesindex
+
     # construction throws in three cases; the range is checked on both sides
     @test_throws ArgumentError ParticleList(z; variables = vars, species = specieslist,
         speciesindex = [1, 2, 1, 2])
@@ -254,11 +260,7 @@ end
         h5open(f, "w") do file
             ParticleMethods.h5save(file, pl)
         end
-        pl2 = ParticleList(f)
-        @test charge.(Ref(pl2), 1:np) == charge.(Ref(pl), 1:np)
-        @test mass.(Ref(pl2), 1:np) == mass.(Ref(pl), 1:np)
-        @test pl2.speciesindex == pl.speciesindex
-        @test pl2.species == pl.species
+        @test ParticleList(f) == pl
 
         # the datasets are written in the element type of the list, `index` as `Int`
         h5open(f, "r") do file
@@ -287,11 +289,7 @@ end
         h5open(f, "r+") do file
             delete_object(file, "species")
         end
-        pl2 = ParticleList(f)
-        @test species(pl2, 1).name === :default
-        @test charge(pl2, 1) == 1.0
-        @test mass(pl2, 1) == 1.0
-        @test pl2.speciesindex == ones(Int, np)
+        @test ParticleList(f) == ParticleList(z; variables = vars)
     end
 end
 
@@ -313,23 +311,14 @@ end
             ParticleMethods.h5save(file, plA; path = "a")
             ParticleMethods.h5save(file, plB; path = "b")
         end
-        a = ParticleList(f, "a")
-        b = ParticleList(f, "b")
-        @test charge.(Ref(a), 1:np) == charge.(Ref(plA), 1:np)
-        @test mass.(Ref(a), 1:np) == mass.(Ref(plA), 1:np)
-        @test a.speciesindex == plA.speciesindex
-        @test charge.(Ref(b), 1:np) == charge.(Ref(plB), 1:np)
-        @test mass.(Ref(b), 1:np) == mass.(Ref(plB), 1:np)
-        @test b.speciesindex == plB.speciesindex
-        @test a.species != b.species
+        @test ParticleList(f, "a") == plA
+        @test ParticleList(f, "b") == plB
 
         # a nested species group stripped from one path leaves the other alone
         h5open(f, "r+") do file
             delete_object(file, "a/species")
         end
-        a2 = ParticleList(f, "a")
-        b2 = ParticleList(f, "b")
-        @test species(a2, 1).name === :default
-        @test charge.(Ref(b2), 1:np) == charge.(Ref(plB), 1:np)
+        @test ParticleList(f, "a") == ParticleList(z; variables = vars)
+        @test ParticleList(f, "b") == plB
     end
 end

@@ -9,10 +9,10 @@ _sort_ntuple(nt::NamedTuple) = NamedTuple{_sort_names(nt)}(nt)
 
 """
     ParticleList(list::AbstractMatrix; variables = NamedTuple(), parameters = NamedTuple(),
-                 species = nothing, speciesindex = nothing)
+                 species = [Species(:default, 1, 1)], speciesindex = nothing)
     ParticleList(DT, np, nd; variables = NamedTuple(), parameters = NamedTuple(),
-                 species = nothing, speciesindex = nothing)
-    ParticleList(x, v, w; parameters = NamedTuple(), species = nothing,
+                 species = [Species(:default, 1, 1)], speciesindex = nothing)
+    ParticleList(x, v, w; parameters = NamedTuple(), species = [Species(:default, 1, 1)],
                  speciesindex = nothing)
     ParticleList(h5::H5DataStore, path = "/")
     ParticleList(fpath::AbstractString, path = "/")
@@ -27,10 +27,11 @@ field names `list`, `views`, `params`, `particles`, `variables`, `indices`, `spe
 `speciesindex`.
 
 `species` is the table of particle species, each a [`Species`](@ref) with a charge and a mass, and
-`speciesindex` gives the species of each particle as an index into that table. A list built
-without `species` holds one species with charge and mass one, so `chargeweights(pl)[1, i]` is the
-weight `w_i` of particle `i`. A list with more than one species needs an explicit `speciesindex` of
-length `np`, with every index in `1:length(species)`.
+`speciesindex` gives the species of each particle as an index into that table. The table is
+converted to the element type of `list`, and the index is copied. A list built without `species`
+holds one species with charge and mass one, so `chargeweights(pl)[1, i]` is the weight `w_i` of
+particle `i`. A list with more than one species needs an explicit `speciesindex` of length `np`,
+with every index in `1:length(species)`.
 
 The second form makes a zero list of element type `DT` with `np` particles of `nd` components.
 The third form stacks positions `x`, velocities `v` and weights `w`, and defines the variables
@@ -53,6 +54,10 @@ struct ParticleList{T, ST <: AbstractMatrix{T}, VT <: NamedTuple, PT <: NamedTup
         @assert isdisjoint(fieldnames(ParticleList), keys(views))
         @assert isdisjoint(fieldnames(ParticleList), keys(params))
         @assert isdisjoint(keys(views), keys(params))
+        length(speciesindex) == size(list, 2) || throw(ArgumentError(
+            "speciesindex has length $(length(speciesindex)), expected $(size(list, 2))"))
+        all(in(eachindex(species)), speciesindex) || throw(ArgumentError(
+            "speciesindex lies outside 1:$(length(species))"))
         new{eltype(list), typeof(list), typeof(views), typeof(params),
             typeof(particles), typeof(variables), typeof(indices)}(
             list, views, params, particles, variables, indices, species, speciesindex)
@@ -61,35 +66,24 @@ end
 
 function ParticleList(
         list::AbstractMatrix; variables = NamedTuple(), parameters = NamedTuple(),
-        species = nothing, speciesindex = nothing)
+        species = [Species(:default, one(eltype(list)), one(eltype(list)))],
+        speciesindex = nothing)
     svariables = _sort_ntuple(variables)
     views = map(idx_range -> view(list, idx_range, :), svariables)
     vars = map(v -> eachslice(v; dims = ndims(v)), views)
     particles = [Particle(p; variables = svariables, parameters = parameters)
                  for p in eachcol(list)]
 
-    T = eltype(list)
-    np = size(list, 2)
-    stable = species === nothing ? [Species(:default, one(T), one(T))] :
-             Species{T}.(species)
-    sind = if speciesindex === nothing
-        if length(stable) > 1
-            throw(ArgumentError(
-                "a ParticleList with $(length(stable)) species needs an explicit speciesindex"))
-        end
-        ones(Int, np)
+    if speciesindex === nothing
+        length(species) > 1 && throw(ArgumentError(
+            "a ParticleList with $(length(species)) species needs an explicit speciesindex"))
+        index = ones(Int, size(list, 2))
     else
-        convert(Vector{Int}, speciesindex)
+        index = collect(Int, speciesindex)
     end
 
-    length(sind) == np || throw(ArgumentError(
-        "speciesindex has length $(length(sind)), expected $np"))
-    for i in sind
-        1 ≤ i ≤ length(stable) || throw(ArgumentError(
-            "speciesindex contains $i, outside 1:$(length(stable))"))
-    end
-
-    ParticleList(list, views, parameters, particles, vars, svariables, stable, sind)
+    ParticleList(list, views, parameters, particles, vars, svariables,
+        Species{eltype(list)}.(species), index)
 end
 
 function ParticleList(DT::DataType, np::Int, nd::Int; kwargs...)
@@ -186,14 +180,14 @@ Return the [`Species`](@ref) of particle `i` in `pl`, that is `pl.species[pl.spe
 
 Return the charge of particle `i` in `pl`, the charge of its [`Species`](@ref).
 """
-@inline charge(pl::ParticleList, i::Integer) = species(pl, i).charge
+@inline charge(pl::ParticleList, i::Integer) = charge(species(pl, i))
 
 """
     mass(pl::ParticleList, i::Integer)
 
 Return the mass of particle `i` in `pl`, the mass of its [`Species`](@ref).
 """
-@inline mass(pl::ParticleList, i::Integer) = species(pl, i).mass
+@inline mass(pl::ParticleList, i::Integer) = mass(species(pl, i))
 
 """
     ChargeWeights{T} <: AbstractMatrix{T}
@@ -226,15 +220,7 @@ It throws an `ArgumentError` when `pl` has no variable `w`, or when `w` spans mo
 """
 function chargeweights(pl::ParticleList{T}) where {T}
     haskey(pl.indices, :w) || throw(ArgumentError("the ParticleList has no variable w"))
-    return ChargeWeights{T, typeof(pl)}(pl, _wrow(pl.indices.w))
-end
-
-_wrow(w::Integer) = Int(w)
-
-function _wrow(w)
-    length(w) == 1 ||
-        throw(ArgumentError("the variable w must span exactly one row, got $(length(w))"))
-    return Int(first(w))
+    return ChargeWeights{T, typeof(pl)}(pl, only(pl.indices.w))
 end
 
 function ParticleList(h5::H5DataStore, path::AbstractString = "/")
@@ -253,19 +239,15 @@ function ParticleList(h5::H5DataStore, path::AbstractString = "/")
 
     params = NamedTuple{paramkeys}(paramvals)
 
-    species, speciesindex = if haskey(group, "species")
-        sgroup = group["species"]
-        names = Symbol.(read(sgroup["name"]))
-        charges = read(sgroup["charge"])
-        masses = read(sgroup["mass"])
-        ([Species(n, q, m) for (n, q, m) in zip(names, charges, masses)],
-            convert(Vector{Int}, read(sgroup["index"])))
+    skwargs = if haskey(group, "species")
+        s = group["species"]
+        (species = Species.(Symbol.(read(s["name"])), read(s["charge"]), read(s["mass"])),
+            speciesindex = read(s["index"]))
     else
-        (nothing, nothing)
+        (;)
     end
 
-    ParticleList(particles; variables = variables, parameters = params,
-        species = species, speciesindex = speciesindex)
+    ParticleList(particles; variables = variables, parameters = params, skwargs...)
 end
 
 function ParticleList(fpath::AbstractString, path::AbstractString = "/")
@@ -290,9 +272,9 @@ function h5save(h5::H5DataStore, p::ParticleList; path::AbstractString = "/")
     end
 
     sgroup = _create_group(group, "species")
-    sgroup["name"] = String[String(s.name) for s in p.species]
-    sgroup["charge"] = [s.charge for s in p.species]
-    sgroup["mass"] = [s.mass for s in p.species]
+    sgroup["name"] = [String(s.name) for s in p.species]
+    sgroup["charge"] = charge.(p.species)
+    sgroup["mass"] = mass.(p.species)
     sgroup["index"] = p.speciesindex
 
     group["particles"] = p.list

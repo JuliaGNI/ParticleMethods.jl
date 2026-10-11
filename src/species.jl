@@ -7,8 +7,9 @@ A particle species: a name, a charge `q` and a mass `m`, shared by every particl
 `Species{T}(s::Species)` converts an existing species to the element type `T` of a
 [`ParticleList`](@ref).
 
-The mass must be positive: a `mass ≤ 0` throws an `ArgumentError`, and the conversion to `T`
-checks again, so a mass that rounds to zero in `T` throws too. The charge may be zero.
+The mass must be positive: a mass that is not, `NaN` included, throws an `ArgumentError`, and the
+conversion to `T` checks again, so a mass that rounds to zero in `T` throws too. The charge may be
+zero.
 
 # Example
 
@@ -25,7 +26,7 @@ struct Species{T}
 
     function Species{T}(name::Symbol, charge, mass) where {T}
         m = convert(T, mass)
-        m ≤ zero(T) &&
+        m > zero(T) ||
             throw(ArgumentError("the mass of species $name must be positive, got $m"))
         new{T}(name, convert(T, charge), m)
     end
@@ -51,11 +52,3 @@ charge(s::Species) = s.charge
 Return the mass `m` of the species `s`.
 """
 mass(s::Species) = s.mass
-
-"""
-    species(s::Species)
-
-Return the species `s` itself, so that `species` reads a species as well as the species of a
-particle in a [`ParticleList`](@ref).
-"""
-species(s::Species) = s
