@@ -149,11 +149,13 @@ _chargeweight(pl, i) = chargeweights(pl)[1, i]
     @test ParticleList(z; variables = vars, species = specieslist,
         speciesindex = Int32[1, 2, 1, 2, 2]) == pl
 
-    # construction throws in three cases
+    # construction throws in three cases; the range is checked on both sides
     @test_throws ArgumentError ParticleList(z; variables = vars, species = specieslist,
         speciesindex = [1, 2, 1, 2])
     @test_throws ArgumentError ParticleList(z; variables = vars, species = specieslist,
         speciesindex = [1, 2, 3, 1, 2])
+    @test_throws ArgumentError ParticleList(z; variables = vars, species = specieslist,
+        speciesindex = [1, 2, 1, 2, 0])
     @test_throws ArgumentError ParticleList(z; variables = vars, species = specieslist)
 
     # equality compares the species table and the index
@@ -257,6 +259,14 @@ end
         @test mass.(Ref(pl2), 1:np) == mass.(Ref(pl), 1:np)
         @test pl2.speciesindex == pl.speciesindex
         @test pl2.species == pl.species
+
+        # the datasets are written in the element type of the list, `index` as `Int`
+        h5open(f, "r") do file
+            @test eltype(read(file["species/charge"])) === T
+            @test eltype(read(file["species/mass"])) === T
+            @test eltype(read(file["species/index"])) === Int
+            @test read(file["species/name"]) isa Vector{String}
+        end
     end
 end
 

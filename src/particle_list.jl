@@ -10,8 +10,10 @@ _sort_ntuple(nt::NamedTuple) = NamedTuple{_sort_names(nt)}(nt)
 """
     ParticleList(list::AbstractMatrix; variables = NamedTuple(), parameters = NamedTuple(),
                  species = nothing, speciesindex = nothing)
-    ParticleList(DT, np, nd; variables = NamedTuple(), parameters = NamedTuple())
-    ParticleList(x, v, w; parameters = NamedTuple())
+    ParticleList(DT, np, nd; variables = NamedTuple(), parameters = NamedTuple(),
+                 species = nothing, speciesindex = nothing)
+    ParticleList(x, v, w; parameters = NamedTuple(), species = nothing,
+                 speciesindex = nothing)
     ParticleList(h5::H5DataStore, path = "/")
     ParticleList(fpath::AbstractString, path = "/")
 
@@ -26,9 +28,9 @@ field names `list`, `views`, `params`, `particles`, `variables`, `indices`, `spe
 
 `species` is the table of particle species, each a [`Species`](@ref) with a charge and a mass, and
 `speciesindex` gives the species of each particle as an index into that table. A list built
-without `species` holds one species with charge and mass one, so `chargeweights(pl)` is `pl.w`. A
-list with more than one species needs an explicit `speciesindex` of length `np`, with every index
-in `1:length(species)`.
+without `species` holds one species with charge and mass one, so `chargeweights(pl)[1, i]` is the
+weight `w_i` of particle `i`. A list with more than one species needs an explicit `speciesindex` of
+length `np`, with every index in `1:length(species)`.
 
 The second form makes a zero list of element type `DT` with `np` particles of `nd` components.
 The third form stacks positions `x`, velocities `v` and weights `w`, and defines the variables
@@ -216,8 +218,9 @@ end
     chargeweights(pl::ParticleList)
 
 Return the charge-weighted weights of the particles in `pl` as a lazy `1 × np` matrix, whose
-`[1, i]` element is `charge(pl, i) * pl.w[1, i]`. This is the weight a charge deposit reads, so a
-deposit that weights each particle by its charge changes one argument and no signature.
+`[1, i]` element is `charge(pl, i) * w_i`, the weight of particle `i`. This is the weight a charge
+deposit reads, so a deposit that weights each particle by its charge changes one argument and no
+signature.
 
 It throws an `ArgumentError` when `pl` has no variable `w`, or when `w` spans more than one row.
 """
