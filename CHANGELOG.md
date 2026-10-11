@@ -22,6 +22,14 @@ first entry is written.
   in-place update over `pl.x` and `pl.v` under `--track-allocation`. It measures rather than
   asserts, so `test/` was the wrong home: a profiling harness that runs as part of the suite costs
   a minute and checks nothing.
+- **`ParticleList` carries a species table and a per-particle species index.** A new `Species`
+  type holds a name, a charge and a mass. `charge(pl, i)`, `mass(pl, i)` and `species(pl, i)`
+  read them back for each particle, and `chargeweights(pl)` returns the charge-weighted weights
+  `q_i · w_i` as a lazy `1 × np` matrix, the weight a charge deposit reads. A list built without
+  a species holds one species with charge and mass one, so `q · w` is `w` and every existing
+  result is unchanged. `h5save` writes the species table and the index as a group beside
+  `particles`, and a file without that group loads with the default species. The species index
+  costs 8 bytes per particle at construction.
 
 ### Changed
 
@@ -48,7 +56,7 @@ first entry is written.
   per particle — a redundant representation of the underlying matrix. It now uses
   `eachslice` over each variable's view, yielding a zero-allocation `AbstractVector` with
   the same element type and values. Measured at `np = 10⁶` particles, `nd = 6`
-  components, three variables: allocation reduced from 328.0 MB to 184.0 MB (43.9%
+  components, three variables: allocation reduced from 328.0 MB to 192.0 MB (41.5%
   reduction).
 - **`StaticArrays` removed from `[deps]` in Project.toml.** The `using StaticArrays: MVector` import
   in `src/ParticleMethods.jl` was the only use in `src/` and was removed by the `Particle(DT, len)`

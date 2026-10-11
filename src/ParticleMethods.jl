@@ -11,6 +11,13 @@ using HDF5: H5DataStore
 
 include("hdf5_utils.jl")
 
+include("species.jl")
+
+export Species
+export charge
+export mass
+export species
+
 include("particle.jl")
 
 export Particle
@@ -19,5 +26,6 @@ include("particle_list.jl")
 
 export ParticleList
 export eachparticle
+export chargeweights
 
 end # module
