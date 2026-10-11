@@ -22,6 +22,15 @@ first entry is written.
   in-place update over `pl.x` and `pl.v` under `--track-allocation`. It measures rather than
   asserts, so `test/` was the wrong home: a profiling harness that runs as part of the suite costs
   a minute and checks nothing.
+- **`ParticleList` carries a species table and a per-particle species index.** A new `Species`
+  type holds a name, a charge and a mass, and rejects a mass that is not positive (`NaN`
+  included). `charge(pl, i)`, `mass(pl, i)` and `species(pl, i)`
+  read them back for each particle, and `chargeweights(pl)` returns the charge-weighted weights
+  `q_i · w_i` as a lazy `1 × np` matrix, the weight a charge deposit reads. A list built without
+  a species holds one species with charge and mass one, so `q · w` is `w` and every existing
+  result is unchanged. `h5save` writes the species table and the index as a group beside
+  `particles`, and a file without that group loads with the default species. The species index
+  costs 8 bytes per particle at construction.
 
 ### Changed
 
@@ -49,7 +58,8 @@ first entry is written.
   `eachslice` over each variable's view, yielding a zero-allocation `AbstractVector` with
   the same element type and values. Measured at `np = 10⁶` particles, `nd = 6`
   components, three variables: allocation reduced from 328.0 MB to 184.0 MB (43.9%
-  reduction).
+  reduction). The species index, which the constructor builds as well, adds 8 bytes per
+  particle on top of that; see the species entry under New Features.
 - **`StaticArrays` removed from `[deps]` in Project.toml.** The `using StaticArrays: MVector` import
   in `src/ParticleMethods.jl` was the only use in `src/` and was removed by the `Particle(DT, len)`
   change. It remains in `[compat]` and as a test-only dependency in `[extras]` because the test suite
@@ -76,6 +86,11 @@ first entry is written.
   test dependencies are in `test/Project.toml`; `Random` is added, and the tests use
   `SafeTestsets`. The root `Project.toml` has no
   `[extras]`, `[targets]` or test-only compat entries. The suite keeps its 81 tests.
+- **HDF5 floor raised to 0.16.16** (`[compat]` `"0.16.16, 0.17"`). `h5save` now writes the species
+  names as a variable-length string dataset (`species/name`). HDF5.jl 0.16.0 to 0.16.15 cannot read
+  a variable-length string on Julia 1.10, because its loader calls `Base._memcpy!`, which Julia 1.10
+  does not define; 0.16.16 guards that call. A Julia 1.10 environment with an older HDF5 resolves to
+  0.16.16 or later.
 
 ### Bug Fixes
 
@@ -106,3 +121,7 @@ first entry is written.
   (`AbstractVector`), but this constructor's concrete return type is now correct. This changes
   equality semantics: `Particle(Float64, 7) == Particle(MVector{7}(zeros(7)))` was `true` before
   and is now `false`, because `==` requires the state types to match.
+- **`species` and `speciesindex` are field names of `ParticleList`, so they are reserved.** The
+  constructor asserts that variable and parameter names are disjoint from the field names, so a
+  variable or parameter named `species` or `speciesindex` now fails with an `AssertionError`. Rename
+  such a variable or parameter.
