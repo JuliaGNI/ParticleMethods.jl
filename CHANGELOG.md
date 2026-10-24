@@ -34,6 +34,12 @@ first entry is written.
 
 ### Changed
 
+- **Julia 1.12 is the floor** (`[compat] julia = "1.12"`, from 1.10). A breaking change under
+  this package's pre-1.0 convention: a caller on Julia 1.10 or 1.11 can no longer install this
+  version. Every package in this tree now states the same floor. Nothing in the package's code
+  changes: it had no version-conditional code and no workaround that existed only for the older
+  floor. The `HDF5` bound `"0.16.16, 0.17"` below is kept as it is, because it was not re-measured
+  against an older HDF5 on Julia 1.12.
 - **`test/defects.jl` moved to `test/integration/defects.jl`.** It tests `src/particle.jl`,
   `src/particle_list.jl` and `src/hdf5_utils.jl`, whose deepest common directory is `src/`
   itself. The test convention keeps a test file at the top level of `test/` only where it
