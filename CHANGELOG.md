@@ -50,6 +50,11 @@ first entry is written.
   environment too. A test or docs project keeps `[compat]` entries only for its own test-only or
   docs-only dependencies, because a copy of a root bound can only duplicate or narrow it, and a
   duplicate drifts.
+- **Test floors raised for the CI downgrade check on Julia 1.12** (`test/Project.toml`).
+  `StaticArrays` goes from `1` to `1.5.17`: every release before 1.5.17 caps Julia at 1.10, so
+  the resolve cannot reach the old floor. `Aqua` goes from `0.8` to `0.8.14`: Aqua 0.8.0 to 0.8.13
+  read `TypeName.mt` in the piracy check, a field Julia 1.12 removed, and 0.8.14 is the first
+  release that examines `Core.methodtable` instead. The suite passes at these floors.
 - **`makeclean.sh` is tracked.** The same script is tracked in the other ten repositories that
   carry it, and this copy is byte-identical to them; this package was the only one where it had
   never been added.
