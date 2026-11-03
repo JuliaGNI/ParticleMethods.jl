@@ -102,12 +102,11 @@ plh5 = ParticleList(h5file)
 @test plh5[1, :] == pl[1, :]
 @test plh5[:, 1] == pl[:, 1]
 
-# A function barrier with concrete arguments, for the allocation assertions: the first call warms
-# the method and the second is measured.
-allocations(f::F, a::A) where {F, A} = (f(a); @allocated f(a))
-allocations(f::F, a::A, i::I) where {F, A, I} = (f(a, i); @allocated f(a, i))
+# The barriers `allocations` and the positive control `_allocating`. Every allocation assertion
+# below runs only where `Base.JLOptions().code_coverage == 0`, so a run with code coverage skips
+# it.
+include("helpers/allocations.jl")
 
-_allocating(pl, i) = zeros(i)
 _chargeweight(pl, i) = chargeweights(pl)[1, i]
 
 # the species table, the per-particle index, and the accessors
@@ -137,10 +136,12 @@ _chargeweight(pl, i) = chargeweights(pl)[1, i]
     @test @inferred(charge(pl, 1)) == T(-1)
     @test @inferred(mass(pl, 1)) == T(0.5)
     @test @inferred(species(pl, 1)) == Species(:e, -1, T(0.5))
-    @test allocations(charge, pl, 1) == 0
-    @test allocations(mass, pl, 1) == 0
-    @test allocations(species, pl, 1) == 0
-    @test allocations(_allocating, pl, 1) > 0
+    if Base.JLOptions().code_coverage == 0
+        @test allocations(charge, pl, 1) == 0
+        @test allocations(mass, pl, 1) == 0
+        @test allocations(species, pl, 1) == 0
+        @test allocations(_allocating, pl, 1) > 0
+    end
 
     # an `Int32` index works, on the accessors and in the keyword
     @test charge(pl, Int32(2)) == charge(pl, 2)
@@ -215,7 +216,10 @@ end
     @test collect(cw) == [-0.25 1.0 -1.0 4.0 8.0]
     @test @inferred(chargeweights(pl)[1, 1]) == -0.25
     @test cw[1, Int32(2)] == 1.0
-    @test allocations(_chargeweight, pl, 1) == 0
+    if Base.JLOptions().code_coverage == 0
+        @test allocations(_chargeweight, pl, 1) == 0
+        @test allocations(_allocating, pl, 1) > 0
+    end
     @test_throws BoundsError cw[2, 1]
 
     # a scalar `w` row and a one-row range agree, on one matrix
@@ -320,5 +324,118 @@ end
         end
         @test ParticleList(f, "a") == ParticleList(z; variables = vars)
         @test ParticleList(f, "b") == plB
+    end
+end
+
+# One barrier per property name: a name passed at run time does not constant-propagate, so each
+# barrier holds its name as a literal.
+_getx(pl) = pl.x
+_geta(pl) = pl.a
+_getlist(pl) = pl.list
+_getparticles(pl) = pl.particles
+_hasx(pl) = hasproperty(pl, :x)
+_hasa(pl) = hasproperty(pl, :a)
+_haslist(pl) = hasproperty(pl, :list)
+_hasnone(pl) = hasproperty(pl, :none)
+
+_getparticle(pl, i) = pl[i]
+_getelement(pl, i, j) = pl[i, j]
+_setparticle!(pl, p, i) = setindex!(pl, p, i)
+_setelement!(pl, v, i, j) = setindex!(pl, v, i, j)
+# the colon is a literal here: a `Colon()` passed through the barrier reads 32 B on Julia 1.13
+_setcolumn!(pl, X, j) = setindex!(pl, X, :, j)
+
+# `iterate` returns a `Union` with `Nothing`, and a barrier that returns it reads 192 B on
+# Julia 1.13; these barriers consume the result and return the state, or 0 at the end of the
+# iteration.
+_firststate(pl) = (r = iterate(pl); r === nothing ? 0 : r[2])
+_nextstate(pl, s) = (r = iterate(pl, s); r === nothing ? 0 : r[2])
+
+# the accessors, the scalar indexing, the column assignment and the iteration of a list
+@testset "accessors, indexing and iteration ($T)" for T in (Float32, Float64)
+    np = 4
+    nd = 4
+    vars = (x = 1:2, v = 3, w = 4)
+    params = (a = 1, b = T(2))
+    z = rand(T, nd, np)
+    pl = ParticleList(z; variables = vars, parameters = params)
+    pl0 = ParticleList(rand(T, nd, 0); variables = vars, parameters = params)
+    p = pl[2]
+    X = rand(T, nd)
+
+    # properties: a variable, a parameter and two field names
+    @test @inferred(_getx(pl)) == view(z, 1:2, :)
+    @test @inferred(_geta(pl)) === 1
+    @test @inferred(_getlist(pl)) === z
+    @test @inferred(_getparticles(pl)) === getfield(pl, :particles)
+    @test @inferred(_hasx(pl)) === true
+    @test @inferred(_hasa(pl)) === true
+    @test @inferred(_haslist(pl)) === true
+    @test @inferred(_hasnone(pl)) === false
+
+    # scalar indexing, scalar assignment and column assignment
+    @test @inferred(_getparticle(pl, 2)) == p
+    @test @inferred(_getelement(pl, 3, 2)) === z[3, 2]
+    @test @inferred(_setparticle!(pl, p, 2)) === pl.particles
+    @test @inferred(_setelement!(pl, T(7), 3, 2)) === z
+    @test z[3, 2] === T(7)
+    @test @inferred(_setcolumn!(pl, X, 2)) === z
+    @test z[:, 2] == X
+
+    # the array interface, on a list of np particles and on an empty list
+    @test @inferred(length(pl)) === np
+    @test @inferred(length(pl0)) === 0
+    @test @inferred(size(pl)) === (nd, np)
+    @test @inferred(eachindex(pl)) === Base.OneTo(np)
+    @test @inferred(eachindex(pl0)) === Base.OneTo(0)
+    @test @inferred(eltype(pl)) === T
+    @test @inferred(eachparticle(pl)) === pl.particles
+
+    # iteration: the first call, a call with the state the first returned, the end, and an empty
+    # list
+    s = iterate(pl)[2]
+    @test @inferred(Nothing, iterate(pl)) == (pl[1], 2)
+    @test @inferred(Nothing, iterate(pl, s)) == (pl[2], 3)
+    @test @inferred(Nothing, iterate(pl, np + 1)) === nothing
+    @test @inferred(Nothing, iterate(pl0)) === nothing
+    @test _firststate(pl) == 2
+    @test _nextstate(pl, s) == 3
+    @test _nextstate(pl, np + 1) == 0
+    @test _firststate(pl0) == 0
+
+    if Base.JLOptions().code_coverage == 0
+        @test allocations(_getx, pl) == 0
+        @test allocations(_geta, pl) == 0
+        @test allocations(_getlist, pl) == 0
+        @test allocations(_getparticles, pl) == 0
+        @test allocations(_hasx, pl) == 0
+        @test allocations(_hasa, pl) == 0
+        @test allocations(_haslist, pl) == 0
+        @test allocations(_hasnone, pl) == 0
+
+        @test allocations(_getparticle, pl, 2) == 0
+        @test allocations(_getelement, pl, 3, 2) == 0
+        @test allocations(_setparticle!, pl, p, 2) == 0
+        @test allocations(_setelement!, pl, T(7), 3, 2) == 0
+        @test allocations(_setcolumn!, pl, X, 2) == 0
+
+        @test allocations(length, pl) == 0
+        @test allocations(length, pl0) == 0
+        @test allocations(size, pl) == 0
+        @test allocations(eachindex, pl) == 0
+        @test allocations(eachindex, pl0) == 0
+        @test allocations(eltype, pl) == 0
+        @test allocations(eachparticle, pl) == 0
+
+        @test allocations(_firststate, pl) == 0
+        @test allocations(_nextstate, pl, s) == 0
+        @test allocations(_nextstate, pl, np + 1) == 0
+        @test allocations(_firststate, pl0) == 0
+
+        # the positive control, on the barrier of each arity above
+        @test allocations(_allocating, pl) > 0
+        @test allocations(_allocating, pl, 2) > 0
+        @test allocations(_allocating, pl, 3, 2) > 0
+        @test allocations(_allocating, pl, T(7), 3, 2) > 0
     end
 end

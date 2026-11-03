@@ -100,6 +100,15 @@ first entry is written.
   a variable-length string on Julia 1.10, because its loader calls `Base._memcpy!`, which Julia 1.10
   does not define; 0.16.16 guards that call. A Julia 1.10 environment with an older HDF5 resolves to
   0.16.16 or later.
+- **The tests assert that the accessors, the indexing and the iteration infer and allocate
+  nothing**, on a `Float32` and a `Float64` list: `getproperty` and `hasproperty` of
+  `ParticleList` and of `Particle`, the scalar `getindex` and `setindex!` of `ParticleList` and its
+  column `setindex!`, `length`, `size`, `eachindex`, `eltype`, `eachparticle` and `iterate`;
+  `length`, `eachindex` and `iterate` on an empty list too. No source file changes. The barrier
+  `allocations` moves to `test/helpers/allocations.jl`, which `test/particle.jl` and
+  `test/particle_list.jl` include. Each allocation assertion, the four existing ones of `charge`,
+  `mass`, `species` and `chargeweights` included, has a positive control on the same barrier and is
+  skipped in a run with code coverage.
 
 ### Bug Fixes
 
