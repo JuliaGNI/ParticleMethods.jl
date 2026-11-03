@@ -345,9 +345,9 @@ _setelement!(pl, v, i, j) = setindex!(pl, v, i, j)
 # the colon is a literal here: a `Colon()` passed through the barrier reads 32 B on Julia 1.13
 _setcolumn!(pl, X, j) = setindex!(pl, X, :, j)
 
-# `iterate` returns a `Union` with `Nothing`, and a barrier that returns it reads 192 B on
-# Julia 1.13; these barriers consume the result and return the state, or 0 at the end of the
-# iteration.
+# `iterate` returns a `Union` with `Nothing`, and a barrier that returns it boxes it: 208 B for
+# the list below on Julia 1.13; these barriers consume the result and return the state, or 0 at
+# the end of the iteration.
 _firststate(pl) = (r = iterate(pl); r === nothing ? 0 : r[2])
 _nextstate(pl, s) = (r = iterate(pl, s); r === nothing ? 0 : r[2])
 
