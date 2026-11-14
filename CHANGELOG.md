@@ -6,14 +6,13 @@ This package is pre-1.0, so *every* minor release is potentially breaking in the
 [SemVer](https://semver.org) for `0.x` versions. The sections below name what actually
 changed, so that a compat-only bump can be told apart from a rename or a change in results.
 
-This file was started on 2026-08-31 and deliberately holds no entries. 4 versions were
+This file was started on 2026-08-31. 4 versions were
 released before it, the most recent `v0.1.2`, and none of them are written up here: the
 record of that history is `git log` and the tags. It is named as a gap rather than
 reconstructed, because a changelog assembled after the fact loses exactly the reasoning that
-makes it worth keeping. The `[Unreleased]` target below is provisional — confirm it when the
-first entry is written.
+makes it worth keeping.
 
-## [Unreleased] — targeting 0.2.0
+## [0.2.0] — 2026-11-14
 
 ### New Features
 
@@ -34,10 +33,6 @@ first entry is written.
 
 ### Changed
 
-- **Julia 1.12 is the floor** (`[compat] julia = "1.12"`, from 1.10). A breaking change under
-  this package's pre-1.0 convention: a caller on Julia 1.10 or 1.11 can no longer install this
-  version. Nothing in the package's code changes: it had no version-conditional code and no
-  workaround that existed only for the older floor.
 - **`test/defects.jl` moved to `test/integration/defects.jl`.** It tests `src/particle.jl`,
   `src/particle_list.jl` and `src/hdf5_utils.jl`, whose deepest common directory is `src/`
   itself. The test convention keeps a test file at the top level of `test/` only where it
@@ -71,10 +66,8 @@ first entry is written.
   particle on top of that; see the species entry under New Features.
 - **`StaticArrays` removed from `[deps]` in Project.toml.** The `using StaticArrays: MVector` import
   in `src/ParticleMethods.jl` was the only use in `src/` and was removed by the `Particle(DT, len)`
-  change. It remains in `[compat]` and as a test-only dependency in `[extras]` because the test suite
-  uses it. `Aqua.test_stale_deps` now passes on this package.
-- **`SafeTestsets` removed from the test dependencies.** No test file used it. `Test` has a
-  `[compat]` entry, so every test-only dependency now declares one.
+  change. It is a test-only dependency in `test/Project.toml`, because the test suite uses it.
+  `Aqua.test_stale_deps` now passes on this package.
 - **`Base.iterate(pl::ParticleList, state)` forwards to `pl.particles`.** One method covers the
   first and the later steps, and the state is the state of `iterate` over the particle vector:
   the index of the next particle, not of the last one.
@@ -87,19 +80,18 @@ first entry is written.
   `Base.Docs.undocumented_names(ParticleMethods)` is now empty, and the library page renders
   all four.
 - **The test suite follows the shared test convention.** The test files mirror `src/`:
-  `test/particle.jl`, `test/particle_list.jl`, and `test/defects.jl`, which spans several
-  source files. The Aqua checks are in `test/quality/aqua.jl`. `test/runtests.jl` holds one
+  `test/particle.jl`, `test/particle_list.jl`, `test/species.jl`, and
+  `test/integration/defects.jl`, which spans several source files. The Aqua checks are in `test/quality/aqua.jl`. `test/runtests.jl` holds one
   `@safetestset` per file in the `core` group, so each file runs in its own module, and
   `Pkg.test(test_args = ["core"])` selects a group; empty `ARGS` runs `core` and `slow`. Each
   file has its own `using` statements and a fixed seed where it draws random numbers. The
   test dependencies are in `test/Project.toml`; `Random` is added, and the tests use
   `SafeTestsets`. The root `Project.toml` has no
-  `[extras]`, `[targets]` or test-only compat entries. The suite keeps its 81 tests.
+  `[extras]`, `[targets]` or test-only compat entries.
 - **HDF5 floor raised to 0.16.16** (`[compat]` `"0.16.16, 0.17"`). `h5save` now writes the species
   names as a variable-length string dataset (`species/name`). HDF5.jl 0.16.0 to 0.16.15 cannot read
   a variable-length string on Julia 1.10, because its loader calls `Base._memcpy!`, which Julia 1.10
-  does not define; 0.16.16 guards that call. A Julia 1.10 environment with an older HDF5 resolves to
-  0.16.16 or later.
+  does not define; 0.16.16 guards that call.
 - **The tests assert that the accessors, the indexing and the iteration infer and allocate
   nothing**, on a `Float32` and a `Float64` list: `getproperty` and `hasproperty` of
   `ParticleList` and of `Particle`, the scalar `getindex` and `setindex!` of `ParticleList` and its
@@ -132,6 +124,10 @@ first entry is written.
 
 ### Breaking Changes
 
+- **Julia 1.12 is the floor** (`[compat] julia = "1.12"`, from 1.10). A breaking change under
+  this package's pre-1.0 convention: a caller on Julia 1.10 or 1.11 can no longer install this
+  version. Nothing in the package's code changes: it had no version-conditional code and no
+  workaround that existed only for the older floor.
 - **`Particle(DT, len; kwargs...)` now returns fully inferred state.** The length-based constructor
   previously built state as `MVector{len}(zeros(DT, len))`, using runtime `len::Int` as a type
   parameter and making return type uninferrable. It now builds plain `zeros(DT, len)` (a `Vector`),
@@ -143,3 +139,7 @@ first entry is written.
   constructor asserts that variable and parameter names are disjoint from the field names, so a
   variable or parameter named `species` or `speciesindex` now fails with an `AssertionError`. Rename
   such a variable or parameter.
+- **The field-wise constructor of `ParticleList` takes eight arguments.** The six-argument
+  `ParticleList(list, views, params, particles, variables, indices)` is removed; the species table
+  `species` and the per-particle index `speciesindex` follow `indices`. A caller of the six-argument
+  form passes both, or builds the list with the keyword constructors, which default to one species.
